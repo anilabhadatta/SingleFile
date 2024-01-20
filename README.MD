@@ -7,24 +7,25 @@ file.
 
 ## Table of Contents
 
-- [Demo](#demo)
-- [Install](#install)
-- [Getting started](#getting-started)
-- [Additional notes](#additional-notes)
-- [FAQ](#faq)
-- [Release notes](#release-notes)
-- [Known issues](#known-issues)
-- [Troubleshooting unknown issues](#troubleshooting-unknown-issues)
-- [Command Line Interface (SingleFile CLI)](#command-line-interface-singlefile-cli)
-- [Integration with user scripts](#integration-with-user-scripts)
-- [SingleFileZ](#singlefilez)
-- [File format comparison](#file-format-comparison)
-- [Projects using/compatible with SingleFile](#projects-usingcompatible-with-singlefile)
-- [Privacy policy](#privacy-policy)
-- [Contributors](#contributors)
-- [Icons](#icons)
-- [Code derived from third party projects](#code-derived-from-third-party-projects)
-- [License](#license)
+- [SingleFile](#singlefile)
+  - [Table of Contents](#table-of-contents)
+  - [Demo](#demo)
+  - [Install](#install)
+  - [Getting started](#getting-started)
+  - [Additional notes](#additional-notes)
+  - [FAQ](#faq)
+  - [Release notes](#release-notes)
+  - [Known Issues](#known-issues)
+  - [Troubleshooting unknown issues](#troubleshooting-unknown-issues)
+  - [Command Line Interface (SingleFile CLI)](#command-line-interface-singlefile-cli)
+  - [Integration with user scripts](#integration-with-user-scripts)
+  - [File format comparison](#file-format-comparison)
+  - [Projects using/compatible with SingleFile](#projects-usingcompatible-with-singlefile)
+  - [Privacy Policy](#privacy-policy)
+  - [Contributors](#contributors)
+  - [Code derived from third party projects](#code-derived-from-third-party-projects)
+  - [Icons](#icons)
+  - [License](#license)
 
 ## Demo
 
@@ -35,13 +36,13 @@ https://user-images.githubusercontent.com/396787/156664907-cc458e35-f41b-45ca-91
 SingleFile can be installed on:
 
 - Firefox: https://addons.mozilla.org/firefox/addon/single-file
+- Firefox for Android:
+  https://addons.mozilla.org/android/addon/single-file
 - Chrome:
   https://chrome.google.com/extensions/detail/mpiodijhokgodhhofbcjdecpffjipkle
-- Safari: https://apps.apple.com/us/app/singlefile-for-safari/id6444322545
+- Safari (macOS and iOS): https://apps.apple.com/us/app/singlefile-for-safari/id6444322545
 - Microsoft Edge:
   https://microsoftedge.microsoft.com/addons/detail/efnbkdcfmcmnhlkaijjjmhjjgladedno
-- Firefox for Android Nightly by following this procedure:
-  https://blog.mozilla.org/addons/2020/09/29/expanded-extension-support-in-firefox-for-android-nightly/
 
 You can also download the zip file
 (https://github.com/gildas-lormeau/SingleFile/archive/master.zip) of the project
@@ -121,7 +122,10 @@ See https://addons.mozilla.org/firefox/addon/single-file/versions/
   - The last saved path cannot be remembered by default. To circumvent this
     limitation, disable the option "Misc > save pages in background".
   - The following characters are replaced with `_` in file names: `~`, `+`, `\`,
-    `?`, `%`, `*`, `:`, `|`, `"`, `<`, `>`
+    `?`, `%`, `*`, `:`, `|`, `"`, `<`, `>`. This is done to maintain compatibility with
+    various OSs and file systems. If you don't need that level of compatibility and know
+    what you are doing, you can change the list of forbidden characters in
+    [Hidden options](https://github.com/gildas-lormeau/SingleFile/wiki/Hidden-options).
 - Chromium-based browsers:
   - You must enable the option "Allow access to file URLs" in the extension page
     to display the infobar when viewing a saved page, and to save or to annotate
@@ -178,34 +182,23 @@ You can execute a user script just before (and after) SingleFile saves a page.
 For more info, see
 https://github.com/gildas-lormeau/SingleFile/wiki/How-to-execute-a-user-script-before-a-page-is-saved.
 
-## SingleFileZ
-
-SingleFileZ is a fork of SingleFile that allows you to save a webpage as a
-self-extracting HTML file. This HTML file is also a valid ZIP file which
-contains the resources (images, fonts, stylesheets and frames) of the saved
-page. This ZIP file can be unzipped on the filesystem in order, for example, to
-view the page in a browser that would not support pages saved with SingleFileZ.
-
-More info here: https://github.com/gildas-lormeau/SingleFileZ
-
 ## File format comparison
 
-|   	                                                                          | HTML (SingleFile)  | HTML (SingleFileZ) | MAFF  | MHTML | Webarchive (Safari) | HTML+folder |
-| ---                                	                                          |       :---:        |       :---:        | :---: | :---: |         :---:       |    :---:    |
-| Pages are saved as a single file                                              | ✓ 	               | ✓ 	                | ✓     | ✓     | ✓                   |             |
-| HTML and styles are minified                                                  | ✓                  | ✓ 	                |       |       |   	                |             |
-| Unused HTML and styles are removed from files                                 | ✓                  | ✓ 	                |       |       |                     |   	        |
-| Binary resources are not encoded in base 64                                   |                    | ✓ 	                | ✓     |       | ✓                   | ✓ 	        |
-| Files are compressed                                                          |                    | ✓ 	                | ✓     |       |                     |   	        |
-| Files can be viewed without installing any extension                          | ✓                  | ✓¹                 |       | ✓²    | ✓³                  | ✓           |
-| Files can be viewed without running JavaScript                                | ✓                  |         	          | ✓     | ✓     | ✓                   | ✓ 	        |
-| Files can be unzipped to extract resources and view pages                     |                    | ✓ 	                | ✓     |       |                     | n/a         |
-| Files contains the text of the page (plain or formatted) which can be indexed | ✓ 	               | ✓⁴                 |       | ✓     | ✓ 	                | ✓ 	        |
+|   	                                                                          |        HTML        | Self-extracting ZIP | MHTML | Webarchive (Safari) | HTML+folder |
+| ---                                	                                          |       :---:        |        :---:        | :---: |         :---:       |    :---:    |
+| Pages are saved as a single file                                              | ✓ 	               | ✓ 	                 | ✓     | ✓                   |             |
+| HTML and styles are minified                                                  | ✓                  | ✓ 	                 |       |    	               |             |
+| Unused HTML and styles are removed from files                                 | ✓                  | ✓ 	                 |       |                     |   	         |
+| Binary resources are not encoded in base 64                                   |                    | ✓ 	                 |       | ✓                   | ✓ 	         |
+| Files are compressed                                                          |                    | ✓ 	                 |       |                     |   	         |
+| Files can be viewed without installing any extension                          | ✓                  | ✓¹                  | ✓²    | ✓³                  | ✓           |
+| Files can be viewed without running JavaScript                                | ✓                  |         	           | ✓     | ✓                   | ✓ 	         |
+| Files can be unzipped to extract page resources                               |                    | ✓ 	                 |       |                     | n/a         |
+| Files contains the text of the page (plain or formatted) which can be indexed | ✓ 	               | ✓⁴                  | ✓     | ✓ 	                 | ✓ 	         |
 
 Footnotes:
 
-¹ A switch must be passed from the command line in Chromium-based browsers, and
-an option must be enabled in Safari.
+¹ When using the "universal" self-extracting file format.
 
 ² Only in Chromium-based browsers, and Internet Explorer.
 
@@ -225,8 +218,13 @@ an option must be enabled in Safari.
   in Petal Cite: https://github.com/ks-collab/cite-extension
 - singlefile2trilium - Tool to save faithful copy of a web page as a Trilium
   note with SingleFile: https://github.com/nil0x42/singlefile2trilium
-- SingleFileMacOS - Integration of SingleFile in a swift application using
-  webkit: https://github.com/captaindavepdx/SingleFileMacOS
+- SingleFileMac - Integration of SingleFile in a swift application using
+  webkit: https://github.com/david-littlefield/SingleFileMac
+- Trilium-SingleFile - An addon for Trilium Notes to easily import SingleFile 
+  html pages: https://github.com/rauenzi/Trilium-SingleFile
+- Trilium Simple SingleFile Renderer - A plugin to add a new Template note to
+  Trilium for render file created by SingleFile:
+  https://github.com/xnohat/trilium-simple-singlefile-renderer
 - Zotero Connector - Browser extension for Zotero, a tool to help you collect,
   organize, cite, and share your research sources:
   https://github.com/zotero/zotero-connectors
@@ -249,7 +247,9 @@ See https://github.com/gildas-lormeau/SingleFile/blob/master/privacy.md
 - Japanese translation done by Shitennouji（四天王寺)
   (https://github.com/Shitennouji)
 - Polish translation done by xesarni (https://github.com/xesarni)
-- Portuguese-Brazilian translation done by @mezysinc
+- Portuguese translation done by Blackspirits (https://github.com/Blackspirits)
+- Portuguese-Brazilian translation done by @mezysinc, Blackspirits
+  (https://github.com/Blackspirits)
 - Russian translation done by rstp14, kramola-RU
   (https://github.com/kramola-RU), solokot (https://github.com/solokot),
   TotalCaesar659 (https://github.com/TotalCaesar659)

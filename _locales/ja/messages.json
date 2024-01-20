@@ -211,9 +211,13 @@
 		"message": "置換文字",
 		"description": "Options page label: 'replacement character'"
 	},
-	"optionReplaceEmojisInFilename" : {
+	"optionReplaceEmojisInFilename": {
 		"message": "絵文字をテキストに置き換える",
 		"description": "Options page label: 'replace emojis with text'"
+	},
+	"optionSaveFilenameTemplateData": {
+		"message": "ファイル名テンプレートデータをページに保存する",
+		"description": "Options page label: 'save the filename template data into the page'"
 	},
 	"optionConfirmFilename": {
 		"message": "を開く（として保存する：ファイル名を確認するためのダイアログ）",
@@ -254,6 +258,50 @@
 	"optionRemoveHiddenElements": {
 		"message": "隠された要素を削除する",
 		"description": "Options page label: 'remove hidden elements'"
+	},
+	"optionsFileFormatSubTitle": {
+		"message": "ファイル形式",
+		"description": "Options sub-title: 'File format'"
+	},
+	"optionFileFormat": {
+		"message": "形式",
+		"description": "Options page label: 'format'"
+	},
+	"optionFileFormatSelectHTML": {
+		"message": "HTML",
+		"description": "Options page label: 'HTML'"
+	},
+	"optionFileFormatSelectSelfExtractingUniversal": {
+		"message": "自己解凍型ZIP（ユニバーサル）",
+		"description": "Options page label: 'self-extracting ZIP (universal)'"
+	},
+	"optionFileFormatSelectSelfExtracting": {
+		"message": "自己解凍型ZIP",
+		"description": "Options page label: 'self-extracting ZIP'"
+	},
+	"optionFileFormatSelectZIP": {
+		"message": "ZIP",
+		"description": "Options page label: 'ZIP'"
+	},
+	"optionPassword": {
+		"message": "パスワード",
+		"description": "Options page label: 'password'"
+	},
+	"optionCreateRootDirectory": {
+		"message": "ルートディレクトリを作成する",
+		"description": "Options page label: 'create a root directory'"
+	},
+	"optionPreventAppendedData": {
+		"message": "ZIPデータの後にデータを追加しない",
+		"description": "Options page label: 'do not append data after the ZIP data'"
+	},
+	"optionInsertTextBody": {
+		"message": "テキストを検索可能にする",
+		"description": "Options page label: 'make text searchable'"
+	},
+	"optionInsertEmbeddedImage": {
+		"message": "insert embedded image",
+		"description": "Options page label: 'insert embedded image'"
 	},
 	"optionsInfobarSubTitle": {
 		"message": "インフォバー",
@@ -583,6 +631,10 @@
 		"message": "Google Drive に保存",
 		"description": "Options page label: 'upload to Google Drive'"
 	},
+	"optionSaveToDropbox": {
+		"message": "Dropbox に保存",
+		"description": "Options page label: 'upload to Dropbox'"
+	},
 	"optionSaveToGitHub": {
 		"message": "GitHub にアップロードする",
 		"description": "Options page label: 'upload to GitHub'"
@@ -691,6 +743,10 @@
 		"message": "フレームの内容",
 		"description": "Label 'Frame contents' in the log panel"
 	},
+	"logPanelEmbeddedImage": {
+		"message": "埋め込み画像",
+		"description": "Label 'Embedded image' in the log panel"
+	},
 	"logPanelStep": {
 		"message": "ステップ",
 		"description": "Label 'Step' (for 'Step x / 4') in the log panel"
@@ -698,6 +754,14 @@
 	"logPanelWidth": {
 		"message": "115",
 		"description": "Width of the log panel in pixels, it should be adjusted for the longest label beginning with 'log' (e.g. 'logPanelDeferredImages')"
+	},
+	"topPanelError": {
+		"message": "SingleFile エラー: ",
+		"description": "Label 'SingleFile error: ' in the top panel when displaying an error message"
+	},
+	"topPanelEmbeddedImageButton": {
+		"message": "画像を開く...",
+		"description": "Top panel button 'Open image...' when embedding an image"
 	},
 	"profileDefaultSettings": {
 		"message": "デフォルトの設定",

@@ -30,7 +30,6 @@ let DEFAULT_PROFILE_NAME,
 	CURRENT_PROFILE_NAME,
 	BACKGROUND_SAVE_SUPPORTED,
 	AUTO_SAVE_SUPPORTED,
-	OPEN_SAVED_PAGE_SUPPORTED,
 	AUTO_OPEN_EDITOR_SUPPORTED,
 	INFOBAR_SUPPORTED,
 	BOOKMARKS_API_SUPPORTED,
@@ -45,7 +44,6 @@ browser.runtime.sendMessage({ method: "config.getConstants" }).then(data => {
 		CURRENT_PROFILE_NAME,
 		BACKGROUND_SAVE_SUPPORTED,
 		AUTO_SAVE_SUPPORTED,
-		OPEN_SAVED_PAGE_SUPPORTED,
 		AUTO_OPEN_EDITOR_SUPPORTED,
 		INFOBAR_SUPPORTED,
 		BOOKMARKS_API_SUPPORTED,
@@ -80,6 +78,7 @@ const saveToFilesystemLabel = document.getElementById("saveToFilesystemLabel");
 const addProofLabel = document.getElementById("addProofLabel");
 const woleetKeyLabel = document.getElementById("woleetKeyLabel");
 const saveToGDriveLabel = document.getElementById("saveToGDriveLabel");
+const saveToDropboxLabel = document.getElementById("saveToDropboxLabel");
 const saveWithWebDAVLabel = document.getElementById("saveWithWebDAVLabel");
 const webDAVURLLabel = document.getElementById("webDAVURLLabel");
 const webDAVUserLabel = document.getElementById("webDAVUserLabel");
@@ -91,6 +90,8 @@ const githubRepositoryLabel = document.getElementById("githubRepositoryLabel");
 const githubBranchLabel = document.getElementById("githubBranchLabel");
 const saveWithCompanionLabel = document.getElementById("saveWithCompanionLabel");
 const compressHTMLLabel = document.getElementById("compressHTMLLabel");
+const insertTextBodyLabel = document.getElementById("insertTextBodyLabel");
+const insertEmbeddedImageLabel = document.getElementById("insertEmbeddedImageLabel");
 const compressCSSLabel = document.getElementById("compressCSSLabel");
 const moveStylesInHeadLabel = document.getElementById("moveStylesInHeadLabel");
 const loadDeferredImagesLabel = document.getElementById("loadDeferredImagesLabel");
@@ -105,6 +106,7 @@ const filenameMaxLengthBytesUnitLabel = document.getElementById("filenameMaxLeng
 const filenameMaxLengthCharsUnitLabel = document.getElementById("filenameMaxLengthCharsUnitLabel");
 const filenameReplacementCharacterLabel = document.getElementById("filenameReplacementCharacterLabel");
 const replaceEmojisInFilenameLabel = document.getElementById("replaceEmojisInFilenameLabel");
+const saveFilenameTemplateDataLabel = document.getElementById("saveFilenameTemplateDataLabel");
 const shadowEnabledLabel = document.getElementById("shadowEnabledLabel");
 const setMaxResourceSizeLabel = document.getElementById("setMaxResourceSizeLabel");
 const maxResourceSizeLabel = document.getElementById("maxResourceSizeLabel");
@@ -136,12 +138,21 @@ const passReferrerOnErrorLabel = document.getElementById("passReferrerOnErrorLab
 const replaceBookmarkURLLabel = document.getElementById("replaceBookmarkURLLabel");
 const allowedBookmarkFoldersLabel = document.getElementById("allowedBookmarkFoldersLabel");
 const ignoredBookmarkFoldersLabel = document.getElementById("ignoredBookmarkFoldersLabel");
+const createRootDirectoryLabel = document.getElementById("createRootDirectoryLabel");
+const preventAppendedDataLabel = document.getElementById("preventAppendedDataLabel");
+const passwordLabel = document.getElementById("passwordLabel");
 const titleLabel = document.getElementById("titleLabel");
 const userInterfaceLabel = document.getElementById("userInterfaceLabel");
 const filenameLabel = document.getElementById("filenameLabel");
 const htmlContentLabel = document.getElementById("htmlContentLabel");
-const imagesLabel = document.getElementById("imagesLabel");
+const fileFormatLabel = document.getElementById("fileFormatLabel");
+const fileFormatSelectHTMLLabel = document.getElementById("fileFormatSelectHTMLLabel");
+const fileFormatSelectSelfExtractingUniversalLabel = document.getElementById("fileFormatSelectSelfExtractingUniversalLabel");
+const fileFormatSelectSelfExtractingLabel = document.getElementById("fileFormatSelectSelfExtractingLabel");
+const fileFormatSelectZIPLabel = document.getElementById("fileFormatSelectZIPLabel");
+const fileFormatSelectLabel = document.getElementById("fileFormatSelectLabel");
 const infobarLabel = document.getElementById("infobarLabel");
+const imagesLabel = document.getElementById("imagesLabel");
 const stylesheetsLabel = document.getElementById("stylesheetsLabel");
 const fontsLabel = document.getElementById("fontsLabel");
 const networkLabel = document.getElementById("networkLabel");
@@ -166,11 +177,11 @@ const autoOpenEditorLabel = document.getElementById("autoOpenEditorLabel");
 const defaultEditorModeLabel = document.getElementById("defaultEditorModeLabel");
 const applySystemThemeLabel = document.getElementById("applySystemThemeLabel");
 const warnUnsavedPageLabel = document.getElementById("warnUnsavedPageLabel");
+const displayInfobarInEditorLabel = document.getElementById("displayInfobarInEditorLabel");
 const infobarTemplateLabel = document.getElementById("infobarTemplateLabel");
 const blockMixedContentLabel = document.getElementById("blockMixedContentLabel");
 const saveOriginalURLsLabel = document.getElementById("saveOriginalURLsLabel");
 const includeInfobarLabel = document.getElementById("includeInfobarLabel");
-const displayInfobarInEditorLabel = document.getElementById("displayInfobarInEditorLabel");
 const removeInfobarSavedDateLabel = document.getElementById("removeInfobarSavedDateLabel");
 const miscLabel = document.getElementById("miscLabel");
 const helpLabel = document.getElementById("helpLabel");
@@ -206,6 +217,7 @@ const saveToClipboardInput = document.getElementById("saveToClipboardInput");
 const addProofInput = document.getElementById("addProofInput");
 const woleetKeyInput = document.getElementById("woleetKeyInput");
 const saveToGDriveInput = document.getElementById("saveToGDriveInput");
+const saveToDropboxInput = document.getElementById("saveToDropboxInput");
 const saveWithWebDAVInput = document.getElementById("saveWithWebDAVInput");
 const webDAVURLInput = document.getElementById("webDAVURLInput");
 const webDAVUserInput = document.getElementById("webDAVUserInput");
@@ -218,6 +230,8 @@ const githubBranchInput = document.getElementById("githubBranchInput");
 const saveWithCompanionInput = document.getElementById("saveWithCompanionInput");
 const saveToFilesystemInput = document.getElementById("saveToFilesystemInput");
 const compressHTMLInput = document.getElementById("compressHTMLInput");
+const insertTextBodyInput = document.getElementById("insertTextBodyInput");
+const insertEmbeddedImageInput = document.getElementById("insertEmbeddedImageInput");
 const compressCSSInput = document.getElementById("compressCSSInput");
 const moveStylesInHeadInput = document.getElementById("moveStylesInHeadInput");
 const loadDeferredImagesInput = document.getElementById("loadDeferredImagesInput");
@@ -231,6 +245,7 @@ const filenameMaxLengthInput = document.getElementById("filenameMaxLengthInput")
 const filenameMaxLengthUnitInput = document.getElementById("filenameMaxLengthUnitInput");
 const filenameReplacementCharacterInput = document.getElementById("filenameReplacementCharacterInput");
 const replaceEmojisInFilenameInput = document.getElementById("replaceEmojisInFilenameInput");
+const saveFilenameTemplateDataInput = document.getElementById("saveFilenameTemplateDataInput");
 const shadowEnabledInput = document.getElementById("shadowEnabledInput");
 const maxResourceSizeInput = document.getElementById("maxResourceSizeInput");
 const maxResourceSizeEnabledInput = document.getElementById("maxResourceSizeEnabledInput");
@@ -258,6 +273,10 @@ const passReferrerOnErrorInput = document.getElementById("passReferrerOnErrorInp
 const replaceBookmarkURLInput = document.getElementById("replaceBookmarkURLInput");
 const allowedBookmarkFoldersInput = document.getElementById("allowedBookmarkFoldersInput");
 const ignoredBookmarkFoldersInput = document.getElementById("ignoredBookmarkFoldersInput");
+const fileFormatSelectInput = document.getElementById("fileFormatSelectInput");
+const createRootDirectoryInput = document.getElementById("createRootDirectoryInput");
+const preventAppendedDataInput = document.getElementById("preventAppendedDataInput");
+const passwordInput = document.getElementById("passwordInput");
 const groupDuplicateImagesInput = document.getElementById("groupDuplicateImagesInput");
 const infobarTemplateInput = document.getElementById("infobarTemplateInput");
 const blockMixedContentInput = document.getElementById("blockMixedContentInput");
@@ -304,6 +323,7 @@ const promptCancelButton = document.getElementById("promptCancelButton");
 const promptConfirmButton = document.getElementById("promptConfirmButton");
 const manifest = browser.runtime.getManifest();
 const requestPermissionIdentity = manifest.optional_permissions && manifest.optional_permissions.includes("identity");
+
 let sidePanelDisplay;
 if (location.href.endsWith("#side-panel")) {
 	sidePanelDisplay = true;
@@ -459,6 +479,16 @@ importButton.addEventListener("click", () => {
 				reader.addEventListener("error", reject, false);
 			});
 			const config = JSON.parse(serializedConfig);
+			Object.keys(config.profiles).forEach(profileName => {
+				const profile = config.profiles[profileName];
+				if (profile.saveToGDrive && !profile.forceWebAuthFlow) {
+					profile.saveToGDrive = false;
+				}
+				profile.saveToClipboard = false;
+				profile.saveWithCompanion = false;
+				profile.saveCreatedBookmarks = false;
+				profile.passReferrerOnError = false;
+			});
 			await browser.runtime.sendMessage({ method: "config.importConfig", config });
 			await refresh(DEFAULT_PROFILE_NAME);
 			await refreshExternalComponents();
@@ -496,6 +526,7 @@ saveToFilesystemInput.addEventListener("click", () => disableDestinationPermissi
 saveToClipboardInput.addEventListener("click", () => disableDestinationPermissions(["nativeMessaging"]), false);
 saveWithCompanionInput.addEventListener("click", () => disableDestinationPermissions(["clipboardWrite"]), false);
 saveToGDriveInput.addEventListener("click", () => disableDestinationPermissions(["clipboardWrite", "nativeMessaging"], false), false);
+saveToDropboxInput.addEventListener("click", () => disableDestinationPermissions(["clipboardWrite", "nativeMessaging"], true, false), false);
 saveWithWebDAVInput.addEventListener("click", () => disableDestinationPermissions(["clipboardWrite", "nativeMessaging"]), false);
 saveCreatedBookmarksInput.addEventListener("click", saveCreatedBookmarks, false);
 passReferrerOnErrorInput.addEventListener("click", passReferrerOnError, false);
@@ -584,6 +615,7 @@ saveToFilesystemLabel.textContent = browser.i18n.getMessage("optionSaveToFilesys
 addProofLabel.textContent = browser.i18n.getMessage("optionAddProof");
 woleetKeyLabel.textContent = browser.i18n.getMessage("optionWoleetKey");
 saveToGDriveLabel.textContent = browser.i18n.getMessage("optionSaveToGDrive");
+saveToDropboxLabel.textContent = browser.i18n.getMessage("optionSaveToDropbox");
 saveWithWebDAVLabel.textContent = browser.i18n.getMessage("optionSaveWithWebDAV");
 webDAVURLLabel.textContent = browser.i18n.getMessage("optionWebDAVURL");
 webDAVUserLabel.textContent = browser.i18n.getMessage("optionWebDAVUser");
@@ -595,6 +627,8 @@ githubRepositoryLabel.textContent = browser.i18n.getMessage("optionGitHubReposit
 githubBranchLabel.textContent = browser.i18n.getMessage("optionGitHubBranch");
 saveWithCompanionLabel.textContent = browser.i18n.getMessage("optionSaveWithCompanion");
 compressHTMLLabel.textContent = browser.i18n.getMessage("optionCompressHTML");
+insertTextBodyLabel.textContent = browser.i18n.getMessage("optionInsertTextBody");
+insertEmbeddedImageLabel.textContent = browser.i18n.getMessage("optionInsertEmbeddedImage");
 compressCSSLabel.textContent = browser.i18n.getMessage("optionCompressCSS");
 moveStylesInHeadLabel.textContent = browser.i18n.getMessage("optionMoveStylesInHead");
 loadDeferredImagesLabel.textContent = browser.i18n.getMessage("optionLoadDeferredImages");
@@ -609,6 +643,7 @@ filenameMaxLengthBytesUnitLabel.textContent = browser.i18n.getMessage("optionFil
 filenameMaxLengthCharsUnitLabel.textContent = browser.i18n.getMessage("optionFilenameMaxLengthCharsUnit");
 filenameReplacementCharacterLabel.textContent = browser.i18n.getMessage("optionFilenameReplacementCharacter");
 replaceEmojisInFilenameLabel.textContent = browser.i18n.getMessage("optionReplaceEmojisInFilename");
+saveFilenameTemplateDataLabel.textContent = browser.i18n.getMessage("optionSaveFilenameTemplateData");
 shadowEnabledLabel.textContent = browser.i18n.getMessage("optionDisplayShadow");
 setMaxResourceSizeLabel.textContent = browser.i18n.getMessage("optionSetMaxResourceSize");
 maxResourceSizeLabel.textContent = browser.i18n.getMessage("optionMaxResourceSize");
@@ -640,11 +675,20 @@ passReferrerOnErrorLabel.textContent = browser.i18n.getMessage("optionPassReferr
 replaceBookmarkURLLabel.textContent = browser.i18n.getMessage("optionReplaceBookmarkURL");
 allowedBookmarkFoldersLabel.textContent = browser.i18n.getMessage("optionAllowedBookmarkFolders");
 ignoredBookmarkFoldersLabel.textContent = browser.i18n.getMessage("optionIgnoredBookmarkFolders");
+createRootDirectoryLabel.textContent = browser.i18n.getMessage("optionCreateRootDirectory");
+preventAppendedDataLabel.textContent = browser.i18n.getMessage("optionPreventAppendedData");
+passwordLabel.textContent = browser.i18n.getMessage("optionPassword");
 groupDuplicateImagesLabel.textContent = browser.i18n.getMessage("optionGroupDuplicateImages");
 titleLabel.textContent = browser.i18n.getMessage("optionsTitle");
 userInterfaceLabel.textContent = browser.i18n.getMessage("optionsUserInterfaceSubTitle");
 filenameLabel.textContent = browser.i18n.getMessage("optionsFileNameSubTitle");
 htmlContentLabel.textContent = browser.i18n.getMessage("optionsHTMLContentSubTitle");
+fileFormatLabel.textContent = browser.i18n.getMessage("optionsFileFormatSubTitle");
+fileFormatSelectHTMLLabel.textContent = browser.i18n.getMessage("optionFileFormatSelectHTML");
+fileFormatSelectSelfExtractingUniversalLabel.textContent = browser.i18n.getMessage("optionFileFormatSelectSelfExtractingUniversal");
+fileFormatSelectSelfExtractingLabel.textContent = browser.i18n.getMessage("optionFileFormatSelectSelfExtracting");
+fileFormatSelectZIPLabel.textContent = browser.i18n.getMessage("optionFileFormatSelectZIP");
+fileFormatSelectLabel.textContent = browser.i18n.getMessage("optionFileFormat");
 infobarLabel.textContent = browser.i18n.getMessage("optionsInfobarSubTitle");
 imagesLabel.textContent = browser.i18n.getMessage("optionsImagesSubTitle");
 stylesheetsLabel.textContent = browser.i18n.getMessage("optionsStylesheetsSubTitle");
@@ -722,9 +766,6 @@ function init() {
 	if (!BOOKMARKS_API_SUPPORTED) {
 		document.getElementById("bookmarksOptions").hidden = true;
 	}
-	if (!OPEN_SAVED_PAGE_SUPPORTED) {
-		document.getElementById("openSavedPageOption").hidden = true;
-	}
 	if (!AUTO_OPEN_EDITOR_SUPPORTED) {
 		document.getElementById("autoOpenEditorOption").hidden = true;
 	}
@@ -733,6 +774,7 @@ function init() {
 	}
 	if (!IDENTITY_API_SUPPORTED) {
 		document.getElementById("saveToGDriveOption").hidden = true;
+		document.getElementById("saveToDropboxOption").hidden = true;
 	}
 	if (!CLIPBOARD_API_SUPPORTED) {
 		document.getElementById("saveToClipboardOption").hidden = true;
@@ -861,6 +903,7 @@ async function refresh(profileName) {
 	woleetKeyInput.value = profileOptions.woleetKey;
 	woleetKeyInput.disabled = !profileOptions.addProof;
 	saveToGDriveInput.checked = profileOptions.saveToGDrive;
+	saveToDropboxInput.checked = profileOptions.saveToDropbox;
 	saveWithWebDAVInput.checked = profileOptions.saveWithWebDAV;
 	webDAVURLInput.value = profileOptions.webDAVURL;
 	webDAVURLInput.disabled = !profileOptions.saveWithWebDAV;
@@ -878,7 +921,7 @@ async function refresh(profileName) {
 	githubBranchInput.value = profileOptions.githubBranch;
 	githubBranchInput.disabled = !profileOptions.saveToGitHub;
 	saveWithCompanionInput.checked = profileOptions.saveWithCompanion;
-	saveToFilesystemInput.checked = !profileOptions.saveToGDrive && !profileOptions.saveToGitHub && !profileOptions.saveWithCompanion && !profileOptions.saveToClipboard && !profileOptions.saveWithWebDAV;
+	saveToFilesystemInput.checked = !profileOptions.saveToGDrive && !profileOptions.saveToGitHub && !profileOptions.saveWithCompanion && !profileOptions.saveToClipboard && !profileOptions.saveWithWebDAV && !profileOptions.saveToDropbox;
 	compressHTMLInput.checked = profileOptions.compressHTML;
 	compressCSSInput.checked = profileOptions.compressCSS;
 	moveStylesInHeadInput.checked = profileOptions.moveStylesInHead;
@@ -897,6 +940,7 @@ async function refresh(profileName) {
 	filenameMaxLengthUnitInput.value = profileOptions.filenameMaxLengthUnit;
 	filenameReplacementCharacterInput.value = profileOptions.filenameReplacementCharacter;
 	replaceEmojisInFilenameInput.checked = profileOptions.replaceEmojisInFilename;
+	saveFilenameTemplateDataInput.checked = profileOptions.saveFilenameTemplateData;
 	shadowEnabledInput.checked = profileOptions.shadowEnabled;
 	maxResourceSizeEnabledInput.checked = profileOptions.maxResourceSizeEnabled;
 	maxResourceSizeInput.value = profileOptions.maxResourceSizeEnabled ? profileOptions.maxResourceSize : 10;
@@ -930,10 +974,22 @@ async function refresh(profileName) {
 	passReferrerOnErrorInput.checked = profileOptions.passReferrerOnError;
 	replaceBookmarkURLInput.checked = profileOptions.replaceBookmarkURL;
 	replaceBookmarkURLInput.disabled = !profileOptions.saveCreatedBookmarks;
-	allowedBookmarkFoldersInput.value = profileOptions.allowedBookmarkFolders.map(folder => folder.replace(/,/g, "\\,")).join(","); // eslint-disable-line no-useless-escape
+	allowedBookmarkFoldersInput.value = profileOptions.allowedBookmarkFolders.map(folder => folder.replace(/,/g, "\\,")).join(",");
 	allowedBookmarkFoldersInput.disabled = !profileOptions.saveCreatedBookmarks;
-	ignoredBookmarkFoldersInput.value = profileOptions.ignoredBookmarkFolders.map(folder => folder.replace(/,/g, "\\,")).join(","); // eslint-disable-line no-useless-escape
+	ignoredBookmarkFoldersInput.value = profileOptions.ignoredBookmarkFolders.map(folder => folder.replace(/,/g, "\\,")).join(",");
 	ignoredBookmarkFoldersInput.disabled = !profileOptions.saveCreatedBookmarks;
+	fileFormatSelectInput.value = profileOptions.compressContent ? profileOptions.selfExtractingArchive ? profileOptions.extractDataFromPage ?
+		"self-extracting-zip-universal" : "self-extracting-zip" : "zip" : "html";
+	createRootDirectoryInput.checked = profileOptions.createRootDirectory;
+	createRootDirectoryInput.disabled = !profileOptions.compressContent;
+	preventAppendedDataInput.checked = profileOptions.preventAppendedData;
+	preventAppendedDataInput.disabled = !profileOptions.compressContent && !profileOptions.selfExtractingArchive;
+	passwordInput.value = profileOptions.password;
+	passwordInput.disabled = !profileOptions.compressContent;
+	insertTextBodyInput.checked = profileOptions.insertTextBody;
+	insertTextBodyInput.disabled = !profileOptions.compressContent || (!profileOptions.selfExtractingArchive && !profileOptions.extractDataFromPage);
+	insertEmbeddedImageInput.checked = profileOptions.insertEmbeddedImage;
+	insertEmbeddedImageInput.disabled = !profileOptions.compressContent;
 	infobarTemplateInput.value = profileOptions.infobarTemplate;
 	blockMixedContentInput.checked = profileOptions.blockMixedContent;
 	saveOriginalURLsInput.checked = profileOptions.saveOriginalURLs;
@@ -989,6 +1045,7 @@ async function update() {
 			addProof: addProofInput.checked,
 			woleetKey: woleetKeyInput.value,
 			saveToGDrive: saveToGDriveInput.checked,
+			saveToDropbox: saveToDropboxInput.checked,
 			saveWithWebDAV: saveWithWebDAVInput.checked,
 			webDAVURL: webDAVURLInput.value,
 			webDAVUser: webDAVUserInput.value,
@@ -1000,6 +1057,8 @@ async function update() {
 			githubBranch: githubBranchInput.value,
 			saveWithCompanion: saveWithCompanionInput.checked,
 			compressHTML: compressHTMLInput.checked,
+			insertTextBody: insertTextBodyInput.checked,
+			insertEmbeddedImage: insertEmbeddedImageInput.checked,
 			compressCSS: compressCSSInput.checked,
 			moveStylesInHead: moveStylesInHeadInput.checked,
 			loadDeferredImages: loadDeferredImagesInput.checked,
@@ -1013,6 +1072,7 @@ async function update() {
 			filenameMaxLengthUnit: filenameMaxLengthUnitInput.value,
 			filenameReplacementCharacter: filenameReplacementCharacterInput.value,
 			replaceEmojisInFilename: replaceEmojisInFilenameInput.checked,
+			saveFilenameTemplateData: saveFilenameTemplateDataInput.checked,
 			shadowEnabled: shadowEnabledInput.checked,
 			maxResourceSizeEnabled: maxResourceSizeEnabledInput.checked,
 			maxResourceSize: maxResourceSizeEnabledInput.checked ? Math.max(maxResourceSizeInput.value, 0) : 10,
@@ -1039,6 +1099,12 @@ async function update() {
 			replaceBookmarkURL: replaceBookmarkURLInput.checked,
 			allowedBookmarkFolders: allowedBookmarkFoldersInput.value.replace(/([^\\]),/g, "$1 ,").split(/[^\\],/).map(folder => folder.replace(/\\,/g, ",")),
 			ignoredBookmarkFolders: ignoredBookmarkFoldersInput.value.replace(/([^\\]),/g, "$1 ,").split(/[^\\],/).map(folder => folder.replace(/\\,/g, ",")),
+			compressContent: fileFormatSelectInput.value.includes("zip"),
+			createRootDirectory: createRootDirectoryInput.checked,
+			preventAppendedData: preventAppendedDataInput.checked,
+			selfExtractingArchive: fileFormatSelectInput.value.includes("self-extracting"),
+			extractDataFromPage: fileFormatSelectInput.value == "self-extracting-zip-universal",
+			password: passwordInput.value,
 			groupDuplicateImages: groupDuplicateImagesInput.checked,
 			infobarTemplate: infobarTemplateInput.value,
 			blockMixedContent: blockMixedContentInput.checked,
@@ -1147,9 +1213,12 @@ async function onClickSaveToGDrive() {
 	await refresh();
 }
 
-async function disableDestinationPermissions(permissions, disableGDrive = true) {
+async function disableDestinationPermissions(permissions, disableGDrive = true, disableDropbox = true) {
 	if (disableGDrive) {
 		await browser.runtime.sendMessage({ method: "downloads.disableGDrive" });
+	}
+	if (disableDropbox) {
+		await browser.runtime.sendMessage({ method: "downloads.disableDropbox" });
 	}
 	try {
 		await browser.permissions.remove({ permissions });

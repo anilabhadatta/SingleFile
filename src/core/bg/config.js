@@ -38,7 +38,6 @@ const BADGE_COLOR_SUPPORTED = IS_NOT_SAFARI;
 const AUTO_SAVE_SUPPORTED = IS_NOT_SAFARI;
 const SELECTABLE_TABS_SUPPORTED = IS_NOT_SAFARI;
 const AUTO_OPEN_EDITOR_SUPPORTED = IS_NOT_SAFARI;
-const OPEN_SAVED_PAGE_SUPPORTED = IS_NOT_SAFARI;
 const INFOBAR_SUPPORTED = IS_NOT_SAFARI;
 const BOOKMARKS_API_SUPPORTED = IS_NOT_SAFARI;
 const IDENTITY_API_SUPPORTED = IS_NOT_SAFARI;
@@ -60,7 +59,7 @@ const DEFAULT_CONFIG = {
 	loadDeferredImagesKeepZoomLevel: false,
 	loadDeferredImagesDispatchScrollEvent: false,
 	loadDeferredImagesBeforeFrames: false,
-	filenameTemplate: "{page-title} ({date-locale} {time-locale}).html",
+	filenameTemplate: "%if-empty<{page-title}|No title> ({date-locale} {time-locale}).{filename-extension}",
 	infobarTemplate: "",
 	includeInfobar: !IS_NOT_SAFARI,
 	confirmInfobarContent: false,
@@ -72,6 +71,7 @@ const DEFAULT_CONFIG = {
 	filenameReplacedCharacters: ["~", "+", "\\\\", "?", "%", "*", ":", "|", "\"", "<", ">", "\x00-\x1f", "\x7F"],
 	filenameReplacementCharacter: "_",
 	replaceEmojisInFilename: false,
+	saveFilenameTemplateData: false,
 	contextMenuEnabled: true,
 	tabMenuEnabled: true,
 	browserActionMenuEnabled: true,
@@ -102,6 +102,7 @@ const DEFAULT_CONFIG = {
 	saveToClipboard: false,
 	addProof: false,
 	saveToGDrive: false,
+	saveToDropbox: false,
 	saveWithWebDAV: false,
 	webDAVURL: "",
 	webDAVUser: "",
@@ -126,10 +127,18 @@ const DEFAULT_CONFIG = {
 	includeBOM: false,
 	warnUnsavedPage: true,
 	displayInfobarInEditor: false,
+	compressContent: false,
+	createRootDirectory: false,
+	selfExtractingArchive: true,
+	extractDataFromPage: true,
+	preventAppendedData: false,
+	insertEmbeddedImage: false,
+	insertTextBody: false,
 	autoSaveExternalSave: false,
 	insertMetaNoIndex: false,
 	insertMetaCSP: true,
 	passReferrerOnError: false,
+	password: "",
 	insertSingleFileComment: true,
 	removeSavedDate: false,
 	blockMixedContent: false,
@@ -151,7 +160,8 @@ const DEFAULT_CONFIG = {
 	blockFonts: false,
 	blockScripts: true,
 	blockVideos: true,
-	blockAudios: true
+	blockAudios: true,
+	_migratedTemplateFormat: true
 };
 
 const DEFAULT_RULES = [{
@@ -159,6 +169,34 @@ const DEFAULT_RULES = [{
 	"profile": "__Default_Settings__",
 	"autoSaveProfile": "__Disabled_Settings__"
 }];
+
+const MIGRATION_DEFAULT_VARIABLES_VALUES = {
+	"page-title": "No title",
+	"page-heading": "No heading",
+	"page-language": "No language",
+	"page-description": "No description",
+	"page-author": "No author",
+	"page-creator": "No creator",
+	"page-publisher": "No publisher",
+	"url-hash": "No hash",
+	"url-host": "No host",
+	"url-hostname": "No hostname",
+	"url-href": "No href",
+	"url-href-digest-sha-1": "No hash",
+	"url-href-flat": "No href",
+	"url-referrer": "No referrer",
+	"url-referrer-flat": "No referrer",
+	"url-password": "No password",
+	"url-pathname": "No pathname",
+	"url-pathname-flat": "No pathname",
+	"url-port": "No port",
+	"url-protocol": "No protocol",
+	"url-search": "No search",
+	"url-username": "No username",
+	"tab-id": "No tab id",
+	"tab-index": "No tab index",
+	"url-last-segment": "No last segment"
+};
 
 let configStorage;
 let pendingUpgradePromise = upgrade();
@@ -170,7 +208,6 @@ export {
 	BADGE_COLOR_SUPPORTED,
 	AUTO_SAVE_SUPPORTED,
 	SELECTABLE_TABS_SUPPORTED,
-	OPEN_SAVED_PAGE_SUPPORTED,
 	AUTO_OPEN_EDITOR_SUPPORTED,
 	INFOBAR_SUPPORTED,
 	BOOKMARKS_API_SUPPORTED,
@@ -186,11 +223,14 @@ export {
 	updateRule,
 	addRule,
 	getAuthInfo,
+	getDropboxAuthInfo,
 	setAuthInfo,
-	removeAuthInfo
+	setDropboxAuthInfo,
+	removeAuthInfo,
+	removeDropboxAuthInfo
 };
 
-async function upgrade(ignoreOldProfiles) {
+async function upgrade() {
 	const { sync } = await browser.storage.local.get();
 	if (sync) {
 		configStorage = browser.storage.sync;
@@ -199,16 +239,16 @@ async function upgrade(ignoreOldProfiles) {
 	}
 	const config = await configStorage.get();
 	if (!config[PROFILE_NAME_PREFIX + DEFAULT_PROFILE_NAME]) {
-		if (config.profiles && !ignoreOldProfiles) {
+		if (config.profiles) {
 			const profileNames = Object.keys(config.profiles);
 			for (const profileName of profileNames) {
 				await setProfile(profileName, config.profiles[profileName]);
 			}
-			// uncomment when migration is done
-			// await configStorage.remove(["profiles"]);
 		} else {
 			await setProfile(DEFAULT_PROFILE_NAME, DEFAULT_CONFIG);
 		}
+	} else if (config.profiles) {
+		await configStorage.remove(["profiles"]);
 	}
 	if (!config.rules) {
 		await configStorage.set({ rules: DEFAULT_RULES });
@@ -218,6 +258,32 @@ async function upgrade(ignoreOldProfiles) {
 	}
 	if (!config.processInForeground) {
 		await configStorage.set({ processInForeground: false });
+	}
+	const profileNames = await getProfileNames();
+	profileNames.map(async profileName => {
+		const profile = await getProfile(profileName);
+		if (!profile._migratedTemplateFormat) {
+			profile.filenameTemplate = updateFilenameTemplate(profile.filenameTemplate);
+			profile._migratedTemplateFormat = true;
+		}
+		for (const key of Object.keys(DEFAULT_CONFIG)) {
+			if (profile[key] === undefined) {
+				profile[key] = DEFAULT_CONFIG[key];
+			}
+		}
+		await setProfile(profileName, profile);
+	});
+}
+
+function updateFilenameTemplate(template) {
+	try {
+		Object.keys(MIGRATION_DEFAULT_VARIABLES_VALUES).forEach(variable => {
+			const value = MIGRATION_DEFAULT_VARIABLES_VALUES[variable];
+			template = template.replaceAll(`{${variable}}`, `%if-empty<{${variable}}|${value}>`);
+		});
+		return template;
+	} catch (_error) {
+		// ignored
 	}
 }
 
@@ -291,7 +357,6 @@ async function onMessage(message) {
 			BADGE_COLOR_SUPPORTED,
 			AUTO_SAVE_SUPPORTED,
 			SELECTABLE_TABS_SUPPORTED,
-			OPEN_SAVED_PAGE_SUPPORTED,
 			AUTO_OPEN_EDITOR_SUPPORTED,
 			INFOBAR_SUPPORTED,
 			BOOKMARKS_API_SUPPORTED,
@@ -518,8 +583,16 @@ async function getAuthInfo() {
 	return (await configStorage.get()).authInfo;
 }
 
+async function getDropboxAuthInfo() {
+	return (await configStorage.get()).dropboxAuthInfo;
+}
+
 async function setAuthInfo(authInfo) {
 	await configStorage.set({ authInfo });
+}
+
+async function setDropboxAuthInfo(authInfo) {
+	await configStorage.set({ dropboxAuthInfo: authInfo });
 }
 
 async function removeAuthInfo() {
@@ -531,6 +604,15 @@ async function removeAuthInfo() {
 	}
 }
 
+async function removeDropboxAuthInfo() {
+	let authInfo = getDropboxAuthInfo();
+	if (authInfo.revokableAccessToken) {
+		setDropboxAuthInfo({ revokableAccessToken: authInfo.revokableAccessToken });
+	} else {
+		await configStorage.remove(["dropboxAuthInfo"]);
+	}
+}
+
 async function resetProfiles() {
 	await pendingUpgradePromise;
 	const allTabsData = await tabsData.get();
@@ -538,7 +620,7 @@ async function resetProfiles() {
 	await tabsData.set(allTabsData);
 	let profileKeyNames = await getProfileKeyNames();
 	await configStorage.remove([...profileKeyNames, "rules", "maxParallelWorkers", "processInForeground"]);
-	await upgrade(true);
+	await upgrade();
 }
 
 async function resetProfile(profileName) {

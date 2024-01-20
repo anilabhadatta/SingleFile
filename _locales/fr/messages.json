@@ -211,9 +211,13 @@
 		"message": "caractère de remplacement",
 		"description": "Options page label: 'replacement character'"
 	},
-	"optionReplaceEmojisInFilename" : {
+	"optionReplaceEmojisInFilename": {
 		"message": "remplacer les emojis par du texte",
 		"description": "Options page label: 'replace emojis with text'"
+	},
+	"optionSaveFilenameTemplateData": {
+		"message": "enregistrer les données du modèle de nom de fichier dans la page",
+		"description": "Options page label: 'save the filename template data into the page'"
 	},
 	"optionConfirmFilename": {
 		"message": "ouvrir la boite de dialogue \"Sauver sous\" pour confirmer le nom de fichier",
@@ -254,6 +258,50 @@
 	"optionRemoveHiddenElements": {
 		"message": "supprimer les élements cachés",
 		"description": "Options page label: 'remove hidden elements'"
+	},
+	"optionsFileFormatSubTitle": {
+		"message": "Format de fichier",
+		"description": "Options sub-title: 'File format'"
+	},
+	"optionFileFormat": {
+		"message": "format",
+		"description": "Options page label: 'format'"
+	},
+	"optionFileFormatSelectHTML": {
+		"message": "HTML",
+		"description": "Options page label: 'HTML'"
+	},
+	"optionFileFormatSelectSelfExtractingUniversal": {
+		"message": "auto-extractibles ZIP (universel)",
+		"description": "Options page label: 'self-extracting ZIP (universal)'"
+	},
+	"optionFileFormatSelectSelfExtracting": {
+		"message": "auto-extractibles ZIP",
+		"description": "Options page label: 'self-extracting ZIP'"
+	},
+	"optionFileFormatSelectZIP": {
+		"message": "ZIP",
+		"description": "Options page label: 'ZIP'"
+	},
+	"optionPassword": {
+		"message": "mot de passe",
+		"description": "Options page label: 'password'"
+	},
+	"optionCreateRootDirectory": {
+		"message": "créer un répertoire racine",
+		"description": "Options page label: 'create a root directory'"
+	},
+	"optionPreventAppendedData": {
+		"message": "ne pas ajouter de données après les données ZIP",
+		"description": "Options page label: 'do not append data after the ZIP data'"
+	},
+	"optionInsertTextBody": {
+		"message": "rendre le texte indexable",
+		"description": "Options page label: 'make text searchable'"
+	},
+	"optionInsertEmbeddedImage": {
+		"message": "insert embedded image",
+		"description": "Options page label: 'insert embedded image'"
 	},
 	"optionsInfobarSubTitle": {
 		"message": "Barre d'information",
@@ -583,6 +631,10 @@
 		"message": "téléverser sur Google Drive",
 		"description": "Options page label: 'upload to Google Drive'"
 	},
+	"optionSaveToDropbox": {
+		"message": "téléverser sur Dropbox",
+		"description": "Options page label: 'upload to Dropbox'"
+	},
 	"optionSaveToGitHub": {
 		"message": "téléverser sur GitHub",
 		"description": "Options page label: 'upload to GitHub'"
@@ -691,6 +743,10 @@
 		"message": "Contenus des cadres",
 		"description": "Label 'Frame contents' in the log panel"
 	},
+	"logPanelEmbeddedImage": {
+		"message": "Image intégrée",
+		"description": "Label 'Embedded image' in the log panel"
+	},
 	"logPanelStep": {
 		"message": "Étape",
 		"description": "Label 'Step' (for 'Step x / 4') in the log panel"
@@ -698,6 +754,14 @@
 	"logPanelWidth": {
 		"message": "147",
 		"description": "Width of the log panel in pixels, it should be adjusted for the longest label beginning with 'log' (e.g. 'logPanelDeferredImages')"
+	},
+	"topPanelError": {
+		"message": "Erreur SingleFile : ",
+		"description": "Label 'SingleFile error: ' in the top panel when displaying an error message"
+	},
+	"topPanelEmbeddedImageButton": {
+		"message": "Ouvrir image...",
+		"description": "Top panel button 'Open image...' when embedding an image"
 	},
 	"profileDefaultSettings": {
 		"message": "Configuration par défaut",
