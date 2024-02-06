@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 Gildas Lormeau
+ * Copyright 2010-2020 Gildas Lormeau
  * contact : gildas.lormeau <at> gmail.com
  * 
  * This file is part of SingleFile.
@@ -42,16 +42,12 @@ function injectedScript() {
 		window.globalThis = window;
 	}
 	const document = globalThis.document;
-	const addEventListener = (name, listener, options) => globalThis.addEventListener(name, listener, options);
-	const dispatchEvent = event => globalThis.dispatchEvent(event);
 	const CustomEvent = globalThis.CustomEvent;
 	const FileReader = globalThis.FileReader;
 	const Blob = globalThis.Blob;
 	const NEW_FONT_FACE_EVENT = "single-file-new-font-face";
 	const DELETE_FONT_EVENT = "single-file-delete-font";
 	const CLEAR_FONTS_EVENT = "single-file-clear-fonts";
-	const GET_ADOPTED_STYLESHEETS_REQUEST_EVENT = "single-file-request-get-adopted-stylesheets";
-	const GET_ADOPTED_STYLESHEETS_RESPONSE_EVENT = "single-file-response-get-adopted-stylesheets";
 	const FONT_STYLE_PROPERTIES = {
 		family: "font-family",
 		style: "font-style",
@@ -62,33 +58,23 @@ function injectedScript() {
 		featureSettings: "font-feature-settings"
 	};
 
-	addEventListener(GET_ADOPTED_STYLESHEETS_REQUEST_EVENT, event => {
-		const shadowRoot = event.target.shadowRoot;
-		if (shadowRoot) {
-			const adoptedStyleSheets = Array.from(shadowRoot.adoptedStyleSheets).map(stylesheet => Array.from(stylesheet.cssRules).map(cssRule => cssRule.cssText).join("\n"));
-			if (adoptedStyleSheets.length) {
-				event.target.dispatchEvent(new CustomEvent(GET_ADOPTED_STYLESHEETS_RESPONSE_EVENT, { detail: { adoptedStyleSheets } }));
-			}
-		}
-	}, { capture: true });
-
 	if (globalThis.FontFace) {
 		const FontFace = globalThis.FontFace;
 		globalThis.FontFace = function () {
-			getDetailObject(...arguments).then(detail => dispatchEvent(new CustomEvent(NEW_FONT_FACE_EVENT, { detail })));
+			getDetailObject(...arguments).then(detail => document.dispatchEvent(new CustomEvent(NEW_FONT_FACE_EVENT, { detail })));
 			return new FontFace(...arguments);
 		};
-		globalThis.FontFace.toString = function () { return "function FontFace() { [native code] }"; };
 		globalThis.FontFace.prototype = FontFace.prototype;
+		globalThis.FontFace.toString = function () { return "function FontFace() { [native code] }"; };
 		const deleteFont = document.fonts.delete;
 		document.fonts.delete = function (fontFace) {
-			getDetailObject(fontFace.family).then(detail => dispatchEvent(new CustomEvent(DELETE_FONT_EVENT, { detail })));
+			getDetailObject(fontFace.family).then(detail => document.dispatchEvent(new CustomEvent(DELETE_FONT_EVENT, { detail })));
 			return deleteFont.call(document.fonts, fontFace);
 		};
 		document.fonts.delete.toString = function () { return "function delete() { [native code] }"; };
 		const clearFonts = document.fonts.clear;
 		document.fonts.clear = function () {
-			dispatchEvent(new CustomEvent(CLEAR_FONTS_EVENT));
+			document.dispatchEvent(new CustomEvent(CLEAR_FONTS_EVENT));
 			return clearFonts.call(document.fonts);
 		};
 		document.fonts.clear.toString = function () { return "function clear() { [native code] }"; };

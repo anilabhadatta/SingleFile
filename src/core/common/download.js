@@ -23,7 +23,9 @@
 
 /* global browser, document, URL, Blob, MouseEvent, setTimeout, open */
 
-const MAX_CONTENT_SIZE = 32 * (1024 * 1024);
+import * as yabson from "./../../lib/yabson/yabson.js";
+
+const MAX_CONTENT_SIZE = 16 * (1024 * 1024);
 
 export {
 	downloadPage
@@ -33,67 +35,111 @@ async function downloadPage(pageData, options) {
 	if (options.includeBOM) {
 		pageData.content = "\ufeff" + pageData.content;
 	}
-	if (options.backgroundSave || options.openEditor || options.saveToGDrive || options.saveToGitHub || options.saveWithCompanion || options.saveWithWebDAV) {
-		const blobURL = URL.createObjectURL(new Blob([pageData.content], { type: "text/html" }));
-		const message = {
-			method: "downloads.download",
-			taskId: options.taskId,
-			confirmFilename: options.confirmFilename,
-			filenameConflictAction: options.filenameConflictAction,
-			filename: pageData.filename,
-			saveToClipboard: options.saveToClipboard,
-			saveToGDrive: options.saveToGDrive,
-			saveWithWebDAV: options.saveWithWebDAV,
-			webDAVURL: options.webDAVURL,
-			webDAVUser: options.webDAVUser,
-			webDAVPassword: options.webDAVPassword,
-			saveToGitHub: options.saveToGitHub,
-			githubToken: options.githubToken,
-			githubUser: options.githubUser,
-			githubRepository: options.githubRepository,
-			githubBranch: options.githubBranch,
-			saveWithCompanion: options.saveWithCompanion,
-			forceWebAuthFlow: options.forceWebAuthFlow,
-			filenameReplacementCharacter: options.filenameReplacementCharacter,
-			openEditor: options.openEditor,
-			openSavedPage: options.openSavedPage,
-			compressHTML: options.compressHTML,
-			backgroundSave: options.backgroundSave,
-			bookmarkId: options.bookmarkId,
-			replaceBookmarkURL: options.replaceBookmarkURL,
-			applySystemTheme: options.applySystemTheme,
-			defaultEditorMode: options.defaultEditorMode,
-			includeInfobar: options.includeInfobar,
-			warnUnsavedPage: options.warnUnsavedPage,
-			blobURL
-		};
+	const embeddedImage = options.embeddedImage;
+	const message = {
+		method: "downloads.download",
+		taskId: options.taskId,
+		insertTextBody: options.insertTextBody,
+		confirmFilename: options.confirmFilename,
+		filenameConflictAction: options.filenameConflictAction,
+		filename: pageData.filename,
+		saveToClipboard: options.saveToClipboard,
+		saveToGDrive: options.saveToGDrive,
+		saveToDropbox: options.saveToDropbox,
+		saveWithWebDAV: options.saveWithWebDAV,
+		webDAVURL: options.webDAVURL,
+		webDAVUser: options.webDAVUser,
+		webDAVPassword: options.webDAVPassword,
+		saveToGitHub: options.saveToGitHub,
+		githubToken: options.githubToken,
+		githubUser: options.githubUser,
+		githubRepository: options.githubRepository,
+		githubBranch: options.githubBranch,
+		saveWithCompanion: options.saveWithCompanion,
+		forceWebAuthFlow: options.forceWebAuthFlow,
+		filenameReplacementCharacter: options.filenameReplacementCharacter,
+		openEditor: options.openEditor,
+		openSavedPage: options.openSavedPage,
+		compressHTML: options.compressHTML,
+		backgroundSave: options.backgroundSave,
+		bookmarkId: options.bookmarkId,
+		replaceBookmarkURL: options.replaceBookmarkURL,
+		applySystemTheme: options.applySystemTheme,
+		defaultEditorMode: options.defaultEditorMode,
+		includeInfobar: options.includeInfobar,
+		warnUnsavedPage: options.warnUnsavedPage,
+		createRootDirectory: options.createRootDirectory,
+		selfExtractingArchive: options.selfExtractingArchive,
+		embeddedImage: embeddedImage ? Array.from(embeddedImage) : null,
+		preventAppendedData: options.preventAppendedData,
+		extractDataFromPage: options.extractDataFromPage,
+		insertCanonicalLink: options.insertCanonicalLink,
+		insertMetaNoIndex: options.insertMetaNoIndex,
+		password: options.password,
+		compressContent: options.compressContent,
+		foregroundSave: options.foregroundSave
+	};
+	if (options.compressContent) {
+		const blob = new Blob([await yabson.serialize(pageData)], { type: "application/octet-stream" });
+		const blobURL = URL.createObjectURL(blob);
+		message.blobURL = blobURL;
 		const result = await browser.runtime.sendMessage(message);
 		URL.revokeObjectURL(blobURL);
 		if (result.error) {
+			message.embeddedImage = embeddedImage;
 			message.blobURL = null;
-			for (let blockIndex = 0; blockIndex * MAX_CONTENT_SIZE < pageData.content.length; blockIndex++) {
-				message.truncated = pageData.content.length > MAX_CONTENT_SIZE;
-				if (message.truncated) {
-					message.finished = (blockIndex + 1) * MAX_CONTENT_SIZE > pageData.content.length;
-					message.content = pageData.content.substring(blockIndex * MAX_CONTENT_SIZE, (blockIndex + 1) * MAX_CONTENT_SIZE);
-				} else {
-					message.content = pageData.content;
-				}
-				await browser.runtime.sendMessage(message);
-			}
+			message.pageData = pageData;
+			let data, indexData = 0;
+			const dataArray = await yabson.serialize(message);
+			do {
+				data = Array.from(dataArray.slice(indexData, indexData + MAX_CONTENT_SIZE));
+				indexData += MAX_CONTENT_SIZE;
+				await browser.runtime.sendMessage({
+					method: "downloads.download",
+					compressContent: true,
+					data
+				});
+			} while (data.length);
+			await browser.runtime.sendMessage({
+				method: "downloads.download",
+				compressContent: true
+			});
+		}
+		if (options.backgroundSave) {
+			await browser.runtime.sendMessage({ method: "downloads.end", taskId: options.taskId });
 		}
 	} else {
-		if (options.saveToClipboard) {
-			saveToClipboard(pageData);
+		if (options.backgroundSave || options.openEditor || options.saveToGDrive || options.saveToGitHub || options.saveWithCompanion || options.saveWithWebDAV || options.saveToDropbox) {
+			const blobURL = URL.createObjectURL(new Blob([pageData.content], { type: "text/html" }));
+			message.blobURL = blobURL;
+			const result = await browser.runtime.sendMessage(message);
+			URL.revokeObjectURL(blobURL);
+			if (result.error) {
+				message.blobURL = null;
+				for (let blockIndex = 0; blockIndex * MAX_CONTENT_SIZE < pageData.content.length; blockIndex++) {
+					message.truncated = pageData.content.length > MAX_CONTENT_SIZE;
+					if (message.truncated) {
+						message.finished = (blockIndex + 1) * MAX_CONTENT_SIZE > pageData.content.length;
+						message.content = pageData.content.substring(blockIndex * MAX_CONTENT_SIZE, (blockIndex + 1) * MAX_CONTENT_SIZE);
+					} else {
+						message.content = pageData.content;
+					}
+					await browser.runtime.sendMessage(message);
+				}
+			}
 		} else {
-			await downloadPageForeground(pageData);
+			if (options.saveToClipboard) {
+				saveToClipboard(pageData);
+			} else {
+				await downloadPageForeground(pageData);
+			}
+			if (options.openSavedPage) {
+				open(URL.createObjectURL(new Blob([pageData.content], { type: "text/html" })));
+			}
+			browser.runtime.sendMessage({ method: "ui.processEnd" });
 		}
-		if (options.openSavedPage) {
-			open(URL.createObjectURL(new Blob([pageData.content], { type: "text/html" })));
-		}
-		browser.runtime.sendMessage({ method: "ui.processEnd" });
+		await browser.runtime.sendMessage({ method: "downloads.end", taskId: options.taskId, hash: pageData.hash, woleetKey: options.woleetKey });
 	}
-	await browser.runtime.sendMessage({ method: "downloads.end", taskId: options.taskId, hash: pageData.hash, woleetKey: options.woleetKey });
 }
 
 async function downloadPageForeground(pageData) {

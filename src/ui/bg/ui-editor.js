@@ -21,12 +21,16 @@
  *   Source.
  */
 
-/* global browser, document, matchMedia, addEventListener, navigator, setInterval */
+/* global browser, document, matchMedia, addEventListener, navigator, prompt, URL, MouseEvent, Blob, setInterval, DOMParser */
 
 import * as download from "../../core/common/download.js";
-import { onError } from "./../common/content-error.js";
+import { onError } from "./../common/common-content-ui.js";
+import * as zip from "./../../../lib/single-file-zip.js";
+import * as yabson from "./../../lib/yabson/yabson.js";
 
 const FOREGROUND_SAVE = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) && !/Vivaldi/.test(navigator.userAgent) && !/OPR/.test(navigator.userAgent);
+const SHADOWROOT_ATTRIBUTE_NAME = "shadowrootmode";
+const INFOBAR_TAGNAME = "single-file-infobar";
 
 const editorElement = document.querySelector(".editor");
 const toolbarElement = document.querySelector(".toolbar");
@@ -53,7 +57,7 @@ const savePageButton = document.querySelector(".save-page-button");
 const printPageButton = document.querySelector(".print-page-button");
 const lastButton = toolbarElement.querySelector(".buttons:last-of-type [type=button]:last-of-type");
 
-let tabData, tabDataContents = [];
+let tabData, tabDataContents = [], downloadParser;
 
 addYellowNoteButton.title = browser.i18n.getMessage("editorAddYellowNote");
 addPinkNoteButton.title = browser.i18n.getMessage("editorAddPinkNote");
@@ -81,8 +85,10 @@ addPinkNoteButton.onmouseup = () => editorElement.contentWindow.postMessage(JSON
 addBlueNoteButton.onmouseup = () => editorElement.contentWindow.postMessage(JSON.stringify({ method: "addNote", color: "note-blue" }), "*");
 addGreenNoteButton.onmouseup = () => editorElement.contentWindow.postMessage(JSON.stringify({ method: "addNote", color: "note-green" }), "*");
 document.addEventListener("mouseup", event => {
-	editorElement.contentWindow.focus();
-	toolbarOnTouchEnd(event);
+	if (event.target.tagName.toLowerCase() != INFOBAR_TAGNAME) {
+		editorElement.contentWindow.focus();
+		toolbarOnTouchEnd(event);
+	}
 }, true);
 document.onmousemove = toolbarOnTouchMove;
 highlightButtons.forEach(highlightButton => {
@@ -266,13 +272,44 @@ addEventListener("resize", viewportSizeChange);
 addEventListener("message", event => {
 	const message = JSON.parse(event.data);
 	if (message.method == "setContent") {
-		const pageData = {
-			content: message.content,
-			filename: tabData.filename
-		};
 		tabData.options.openEditor = false;
 		tabData.options.openSavedPage = false;
-		download.downloadPage(pageData, tabData.options);
+		if (message.compressContent) {
+			tabData.options.compressContent = true;
+			if (tabData.selfExtractingArchive !== undefined) {
+				tabData.options.selfExtractingArchive = tabData.selfExtractingArchive;
+			}
+			if (tabData.extractDataFromPageTags !== undefined) {
+				tabData.options.extractDataFromPage = tabData.extractDataFromPageTags;
+			}
+			if (tabData.insertTextBody !== undefined) {
+				tabData.options.insertTextBody = tabData.insertTextBody;
+			}
+			if (tabData.embeddedImage !== undefined) {
+				tabData.options.embeddedImage = tabData.embeddedImage;
+			}
+			getContentPageData(tabData.content, message.content, { password: tabData.options.password })
+				.then(pageData => {
+					pageData.content = message.content;
+					pageData.title = message.title;
+					pageData.doctype = message.doctype;
+					pageData.viewport = message.viewport;
+					pageData.url = message.url;
+					pageData.filename = message.filename || tabData.filename;
+					if (message.foregroundSave) {
+						tabData.options.backgroundSave = false;
+						tabData.options.foregroundSave = true;
+					}
+					return download.downloadPage(pageData, tabData.options);
+				});
+		} else {
+			const pageData = {
+				content: message.content,
+				filename: message.filename || tabData.filename
+			};
+			tabData.options.compressContent = false;
+			download.downloadPage(pageData, tabData.options);
+		}
 	}
 	if (message.method == "onUpdate") {
 		tabData.docSaved = message.saved;
@@ -311,6 +348,13 @@ addEventListener("message", event => {
 	if (message.method == "savePage") {
 		savePage();
 	}
+	if (message.method == "displayInfobar") {
+		const doc = new DOMParser().parseFromString(message.content, "text/html");
+		deserializeShadowRoots(doc.body);
+		const infobarElement = doc.querySelector(INFOBAR_TAGNAME);
+		infobarElement.shadowRoot.querySelector("style").textContent += ".infobar { position: absolute; }";
+		document.querySelector(".editor-container").appendChild(infobarElement);
+	}
 });
 
 browser.runtime.onMessage.addListener(message => {
@@ -334,10 +378,9 @@ browser.runtime.onMessage.addListener(message => {
 			tabData = JSON.parse(tabDataContents.join(""));
 			tabData.options = message.options;
 			tabDataContents = [];
-			editorElement.contentWindow.postMessage(JSON.stringify({ method: "init", content: tabData.content }), "*");
+			editorElement.contentWindow.postMessage(JSON.stringify({ method: "init", content: tabData.content, password: tabData.options.password, compressContent: message.compressContent }), "*");
 			editorElement.contentWindow.focus();
 			setInterval(() => browser.runtime.sendMessage({ method: "editor.ping" }), 15000);
-			delete tabData.content;
 		}
 		return Promise.resolve({});
 	}
@@ -346,6 +389,9 @@ browser.runtime.onMessage.addListener(message => {
 	}
 	if (message.method == "content.error") {
 		onError(message.error, message.link);
+	}
+	if (message.method == "content.download") {
+		return downloadContent(message);
 	}
 });
 
@@ -359,6 +405,32 @@ addEventListener("beforeunload", event => {
 		event.returnValue = "";
 	}
 });
+
+async function downloadContent(message) {
+	if (!downloadParser) {
+		downloadParser = yabson.getParser();
+	}
+	const result = await downloadParser.next(message.data);
+	if (result.done) {
+		downloadParser = null;
+		if (result.value.foregroundSave) {
+			editorElement.contentWindow.postMessage(JSON.stringify({
+				method: "download",
+				filename: result.value.filename,
+				content: Array.from(new Uint8Array(result.value.content))
+			}), "*");
+		} else {
+			const link = document.createElement("a");
+			link.download = result.value.filename;
+			link.href = URL.createObjectURL(new Blob([result.value.content]), "text/html");
+			link.dispatchEvent(new MouseEvent("click"));
+			URL.revokeObjectURL(link.href);
+		}
+		return browser.runtime.sendMessage({ method: "downloads.end", taskId: result.value.taskId }).then(() => ({}));
+	} else {
+		return Promise.resolve({});
+	}
+}
 
 async function refreshOptions(profileName) {
 	const profiles = await browser.runtime.sendMessage({ method: "config.getProfiles" });
@@ -441,6 +513,7 @@ function savePage() {
 		method: "getContent",
 		compressHTML: tabData.options.compressHTML,
 		includeInfobar: tabData.options.includeInfobar,
+		backgroundSave: tabData.options.backgroundSave,
 		updatedResources,
 		filename: tabData.filename,
 		foregroundSave: FOREGROUND_SAVE
@@ -460,4 +533,109 @@ function getPosition(event) {
 	} else {
 		return event;
 	}
+}
+
+async function getContentPageData(zipContent, page, options) {
+	zip.configure({ workerScripts: { inflate: ["/lib/single-file-z-worker.js"] } });
+	const zipReader = new zip.ZipReader(new zip.Uint8ArrayReader(new Uint8Array(zipContent)));
+	const entries = await zipReader.getEntries();
+	const resources = [];
+	await Promise.all(entries.map(async entry => {
+		let data;
+		if (!options.password && entry.bitFlag.encrypted) {
+			options.password = prompt("Please enter the password to view the page");
+		}
+		if (entry.filename.match(/^([0-9_]+\/)?index.html$/)) {
+			data = page;
+		} else {
+			if (entry.filename.endsWith(".html")) {
+				data = await entry.getData(new zip.TextWriter(), options);
+			} else {
+				data = await entry.getData(new zip.Uint8ArrayWriter(), options);
+			}
+		}
+		const extensionMatch = entry.filename.match(/\.([^.]+)/);
+		resources.push({
+			filename: entry.filename.match(/^([0-9_]+\/)?(.*)$/)[2],
+			extension: extensionMatch && extensionMatch[1],
+			content: data,
+			url: entry.comment
+		});
+	}));
+	return getPageData(resources);
+}
+
+function getPageData(resources) {
+	const pageData = JSON.parse(JSON.stringify(EMPTY_PAGE_DATA));
+	for (const resource of resources) {
+		const resourcePageData = getPageDataResource(resource, "", pageData);
+		const filename = resource.filename.substring(resourcePageData.prefixPath.length);
+		resource.name = filename;
+		if (filename.startsWith("images/")) {
+			resourcePageData.resources.images.push(resource);
+		}
+		if (filename.startsWith("fonts/")) {
+			resourcePageData.resources.fonts.push(resource);
+		}
+		if (filename.startsWith("scripts/")) {
+			resourcePageData.resources.scripts.push(resource);
+		}
+		if (filename.endsWith(".css")) {
+			resourcePageData.resources.stylesheets.push(resource);
+		}
+		if (filename.endsWith(".html")) {
+			resourcePageData.content = resource.content;
+		}
+	}
+	return pageData;
+}
+
+const EMPTY_PAGE_DATA = {
+	name: "",
+	prefixPath: "",
+	resources: {
+		stylesheets: [],
+		images: [],
+		fonts: [],
+		scripts: [],
+		frames: []
+	}
+};
+
+function getPageDataResource(resource, prefixPath = "", pageData) {
+	const filename = resource.filename.substring(prefixPath.length);
+	resource.name = filename;
+	if (filename.startsWith("frames/")) {
+		const framesIndex = Number(filename.match(/^frames\/(\d+)\//)[1]);
+		const framePath = "frames/" + framesIndex + "/";
+		if (!pageData.resources.frames[framesIndex]) {
+			pageData.resources.frames[framesIndex] = Object.assign(JSON.parse(JSON.stringify(EMPTY_PAGE_DATA)), {
+				name: framePath,
+				prefixPath: prefixPath + framePath
+			});
+		}
+		return getPageDataResource(resource, prefixPath + framePath, pageData.resources.frames[framesIndex]);
+	} else {
+		return pageData;
+	}
+}
+
+function deserializeShadowRoots(node) {
+	node.querySelectorAll(`template[${SHADOWROOT_ATTRIBUTE_NAME}]`).forEach(element => {
+		if (element.parentElement) {
+			let shadowRoot;
+			try {
+				shadowRoot = element.parentElement.attachShadow({ mode: "open" });
+				const contentDocument = (new DOMParser()).parseFromString(element.innerHTML, "text/html");
+				Array.from(contentDocument.head.childNodes).forEach(node => shadowRoot.appendChild(node));
+				Array.from(contentDocument.body.childNodes).forEach(node => shadowRoot.appendChild(node));
+			} catch (error) {
+				// ignored
+			}
+			if (shadowRoot) {
+				deserializeShadowRoots(shadowRoot);
+				element.remove();
+			}
+		}
+	});
 }
