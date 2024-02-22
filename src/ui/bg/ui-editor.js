@@ -28,6 +28,11 @@ import { onError } from "./../common/common-content-ui.js";
 import * as zip from "./../../../lib/single-file-zip.js";
 import * as yabson from "./../../lib/yabson/yabson.js";
 
+const EMBEDDED_IMAGE_BUTTON_MESSAGE = browser.i18n.getMessage("topPanelEmbeddedImageButton");
+const SHARE_PAGE_BUTTON_MESSAGE = browser.i18n.getMessage("topPanelSharePageButton");
+const SHARE_SELECTION_BUTTON_MESSAGE = browser.i18n.getMessage("topPanelShareSelectionButton");
+const ERROR_TITLE_MESSAGE = browser.i18n.getMessage("topPanelError");
+
 const FOREGROUND_SAVE = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) && !/Vivaldi/.test(navigator.userAgent) && !/OPR/.test(navigator.userAgent);
 const SHADOWROOT_ATTRIBUTE_NAME = "shadowrootmode";
 const INFOBAR_TAGNAME = "single-file-infobar";
@@ -288,6 +293,9 @@ addEventListener("message", event => {
 			if (tabData.embeddedImage !== undefined) {
 				tabData.options.embeddedImage = tabData.embeddedImage;
 			}
+			if (tabData.insertMetaCSP !== undefined) {
+				tabData.options.insertMetaCSP = tabData.insertMetaCSP;
+			}
 			getContentPageData(tabData.content, message.content, { password: tabData.options.password })
 				.then(pageData => {
 					pageData.content = message.content;
@@ -296,6 +304,7 @@ addEventListener("message", event => {
 					pageData.viewport = message.viewport;
 					pageData.url = message.url;
 					pageData.filename = message.filename || tabData.filename;
+					pageData.mimeType = "text/html";
 					if (message.foregroundSave) {
 						tabData.options.backgroundSave = false;
 						tabData.options.foregroundSave = true;
@@ -305,7 +314,8 @@ addEventListener("message", event => {
 		} else {
 			const pageData = {
 				content: message.content,
-				filename: message.filename || tabData.filename
+				filename: message.filename || tabData.filename,
+				mimeType: "text/html"
 			};
 			tabData.options.compressContent = false;
 			download.downloadPage(pageData, tabData.options);
@@ -344,6 +354,10 @@ addEventListener("message", event => {
 				enableCutOuterPage();
 			}
 		}
+	}
+	if (message.method == "onError") {
+		browser.runtime.sendMessage({ method: "ui.processError", error: message.error });
+		onError(message.error);
 	}
 	if (message.method == "savePage") {
 		savePage();
@@ -413,16 +427,18 @@ async function downloadContent(message) {
 	const result = await downloadParser.next(message.data);
 	if (result.done) {
 		downloadParser = null;
-		if (result.value.foregroundSave) {
+		if (result.value.foregroundSave || result.value.sharePage) {
 			editorElement.contentWindow.postMessage(JSON.stringify({
 				method: "download",
 				filename: result.value.filename,
-				content: Array.from(new Uint8Array(result.value.content))
+				content: Array.from(new Uint8Array(result.value.content)),
+				mimeType: result.value.mimeType,
+				sharePage: result.value.sharePage
 			}), "*");
 		} else {
 			const link = document.createElement("a");
 			link.download = result.value.filename;
-			link.href = URL.createObjectURL(new Blob([result.value.content]), "text/html");
+			link.href = URL.createObjectURL(new Blob([result.value.content], { type: result.value.mimeType }));
 			link.dispatchEvent(new MouseEvent("click"));
 			URL.revokeObjectURL(link.href);
 		}
@@ -516,7 +532,14 @@ function savePage() {
 		backgroundSave: tabData.options.backgroundSave,
 		updatedResources,
 		filename: tabData.filename,
-		foregroundSave: FOREGROUND_SAVE
+		foregroundSave: FOREGROUND_SAVE,
+		sharePage: tabData.options.sharePage,
+		labels: {
+			EMBEDDED_IMAGE_BUTTON_MESSAGE,
+			SHARE_PAGE_BUTTON_MESSAGE,
+			SHARE_SELECTION_BUTTON_MESSAGE,
+			ERROR_TITLE_MESSAGE
+		}
 	}), "*");
 }
 
