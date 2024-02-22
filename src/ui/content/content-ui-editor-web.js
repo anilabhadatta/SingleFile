@@ -21,7 +21,10 @@
  *   Source.
  */
 
-/* global globalThis, window, document, fetch, DOMParser, getComputedStyle, setTimeout, clearTimeout, NodeFilter, Readability, isProbablyReaderable, matchMedia, TextDecoder, Node, URL, MouseEvent, Blob, prompt, MutationObserver, FileReader, Worker, navigator */
+/* global globalThis, window, document, fetch, DOMParser, getComputedStyle, setTimeout, clearTimeout, NodeFilter, Readability, isProbablyReaderable, matchMedia, TextDecoder, Node, URL, prompt, MutationObserver, FileReader, Worker, navigator */
+
+import { setLabels } from "./../../ui/common/common-content-ui.js";
+import { downloadPageForeground } from "../../core/common/download.js";
 
 (globalThis => {
 
@@ -47,6 +50,7 @@
 	const MASK_CLASS = "single-file-mask";
 	const PAGE_MASK_CONTAINER_CLASS = "single-file-page-mask";
 	const HIGHLIGHT_CLASS = "single-file-highlight";
+	const HIGHLIGHTS_STYLESHEET_CLASS = "single-file-highlights-stylesheet";
 	const REMOVED_CONTENT_CLASS = "single-file-removed";
 	const HIGHLIGHT_HIDDEN_CLASS = "single-file-highlight-hidden";
 	const PAGE_MASK_ACTIVE_CLASS = "page-mask-active";
@@ -1085,6 +1089,9 @@ pre code {
 					pageOptions.visitDate = new Date(pageOptions.visitDate);
 					filename = await singlefile.helper.formatFilename(content, document, pageOptions);
 				}
+				if (message.sharePage) {
+					setLabels(message.labels);
+				}
 				if (pageCompressContent) {
 					const viewport = document.head.querySelector("meta[name=viewport]");
 					window.parent.postMessage(JSON.stringify({
@@ -1096,17 +1103,21 @@ pre code {
 						url: pageUrl,
 						viewport: viewport ? viewport.content : null,
 						compressContent: true,
-						foregroundSave: message.foregroundSave
+						foregroundSave: message.foregroundSave,
+						sharePage: message.sharePage
 					}), "*");
 				} else {
-					if (message.foregroundSave) {
-						if (filename || (message.filename && message.filename.length)) {
-							const link = document.createElement("a");
-							link.download = filename || message.filename;
-							link.href = URL.createObjectURL(new Blob([content], { type: "text/html" }));
-							link.dispatchEvent(new MouseEvent("click"));
+					if (message.foregroundSave || message.sharePage) {
+						try {
+							await downloadPageForeground({
+								content,
+								filename: filename || message.filename,
+								mimeType: "text/html"
+							}, { sharePage: message.sharePage });
+						} catch (error) {
+							console.log(error); // eslint-disable-line no-console
+							window.parent.postMessage(JSON.stringify({ method: "onError", error: error.message }), "*");
 						}
-						return new Promise(resolve => setTimeout(resolve, 1));
 					} else {
 						window.parent.postMessage(JSON.stringify({
 							method: "setContent",
@@ -1131,10 +1142,17 @@ pre code {
 				}), "*");
 			}
 			if (message.method == "download") {
-				const link = document.createElement("a");
-				link.download = message.filename;
-				link.href = URL.createObjectURL(new Blob([new Uint8Array(message.content)], { type: "text/html" }));
-				link.dispatchEvent(new MouseEvent("click"));
+				debugger;
+				try {
+					await downloadPageForeground({
+						content: message.content,
+						filename: message.filename,
+						mimeType: message.mimeType
+					}, { sharePage: message.sharePage });
+				} catch (error) {
+					console.log(error); // eslint-disable-line no-console
+					window.parent.postMessage(JSON.stringify({ method: "onError", error: error.message }), "*");
+				}
 			}
 		};
 		window.onresize = reflowNotes;
@@ -1189,9 +1207,9 @@ pre code {
 				const iconElement = origContentDocument.querySelector("link[rel*=icon]");
 				if (iconElement) {
 					const iconResource = resources.find(resource => resource.filename == iconElement.getAttribute("href"));
-					if (iconResource && iconResource.blob) {
+					if (iconResource && iconResource.content) {
 						const reader = new FileReader();
-						reader.readAsDataURL(iconResource.blob);
+						reader.readAsDataURL(await (await fetch(iconResource.content)).blob());
 						icon = await new Promise((resolve, reject) => {
 							reader.addEventListener("load", () => resolve(reader.result), false);
 							reader.addEventListener("error", reject, false);
@@ -1243,7 +1261,7 @@ pre code {
 				document.querySelectorAll("[data-single-file-note-refs]").forEach(noteRefElement => noteRefElement.dataset.singleFileNoteRefs = noteRefElement.dataset.singleFileNoteRefs.replace(/,/g, " "));
 				deserializeShadowRoots(document);
 				document.querySelectorAll(NOTE_TAGNAME).forEach(containerElement => attachNoteListeners(containerElement, true));
-				document.documentElement.appendChild(getStyleElement(HIGHLIGHTS_WEB_STYLESHEET));
+				insertHighlightStylesheet(document);
 				maskPageElement = getMaskElement(PAGE_MASK_CLASS, PAGE_MASK_CONTAINER_CLASS);
 				maskNoteElement = getMaskElement(NOTE_MASK_CLASS);
 				document.documentElement.onmousedown = onMouseDown;
@@ -1285,7 +1303,7 @@ pre code {
 		await waitResourcesLoad();
 		reflowNotes();
 		document.querySelectorAll(NOTE_TAGNAME).forEach(containerElement => attachNoteListeners(containerElement, true));
-		document.documentElement.appendChild(getStyleElement(HIGHLIGHTS_WEB_STYLESHEET));
+		insertHighlightStylesheet(document);
 		maskPageElement = getMaskElement(PAGE_MASK_CLASS, PAGE_MASK_CONTAINER_CLASS);
 		maskNoteElement = getMaskElement(NOTE_MASK_CLASS);
 		document.documentElement.onmousedown = onMouseDown;
@@ -2025,7 +2043,7 @@ pre code {
 				element.setAttribute("href", href.substring(document.baseURI.length));
 			}
 		});
-		document.documentElement.appendChild(getStyleElement(HIGHLIGHTS_WEB_STYLESHEET));
+		insertHighlightStylesheet(document);
 		maskPageElement = getMaskElement(PAGE_MASK_CLASS, PAGE_MASK_CONTAINER_CLASS);
 		maskNoteElement = getMaskElement(NOTE_MASK_CLASS);
 		reflowNotes();
@@ -2048,6 +2066,14 @@ pre code {
 		}
 	}
 
+	function insertHighlightStylesheet(doc) {
+		if (!doc.querySelector("." + HIGHLIGHTS_STYLESHEET_CLASS)) {
+			const styleheetHighlights = getStyleElement(HIGHLIGHTS_WEB_STYLESHEET);
+			styleheetHighlights.classList.add(HIGHLIGHTS_STYLESHEET_CLASS);
+			doc.documentElement.appendChild(styleheetHighlights);
+		}
+	}
+
 	function getContent(compressHTML, updatedResources) {
 		unhighlightCutElement();
 		serializeShadowRoots(document);
@@ -2061,7 +2087,7 @@ pre code {
 			element.textContent = element.getAttribute(DISABLED_NOSCRIPT_ATTRIBUTE_NAME);
 			element.removeAttribute(DISABLED_NOSCRIPT_ATTRIBUTE_NAME);
 		});
-		doc.querySelectorAll("." + MASK_CLASS + ", " + singlefile.helper.INFOBAR_TAGNAME + ", ." + REMOVED_CONTENT_CLASS).forEach(maskElement => maskElement.remove());
+		doc.querySelectorAll("." + MASK_CLASS + ", " + singlefile.helper.INFOBAR_TAGNAME + ", ." + REMOVED_CONTENT_CLASS).forEach(element => element.remove());
 		if (includeInfobar) {
 			singlefile.helper.appendInfobar(doc, singlefile.helper.extractInfobarData(doc));
 		}

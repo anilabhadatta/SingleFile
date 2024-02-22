@@ -21,20 +21,31 @@
  *   Source.
  */
 
-/* global browser, document, globalThis, location, URL, Blob, MouseEvent */
+/* global browser, document, globalThis, location, setTimeout */
 
 import * as download from "./../common/download.js";
 import { fetch, frameFetch } from "./../../lib/single-file/fetch/content/content-fetch.js";
 import * as ui from "./../../ui/content/content-ui.js";
-import { onError, getOpenFileBar, openFile } from "./../../ui/common/common-content-ui.js";
+import { onError, getOpenFileBar, openFile, setLabels } from "./../../ui/common/common-content-ui.js";
 import * as yabson from "./../../lib/yabson/yabson.js";
 
 const singlefile = globalThis.singlefile;
 const bootstrap = globalThis.singlefileBootstrap;
 
 const MOZ_EXTENSION_PROTOCOL = "moz-extension:";
+const EMBEDDED_IMAGE_BUTTON_MESSAGE = browser.i18n.getMessage("topPanelEmbeddedImageButton");
+const SHARE_PAGE_BUTTON_MESSAGE = browser.i18n.getMessage("topPanelSharePageButton");
+const SHARE_SELECTION_BUTTON_MESSAGE = browser.i18n.getMessage("topPanelShareSelectionButton");
+const ERROR_TITLE_MESSAGE = browser.i18n.getMessage("topPanelError");
 
 let processor, processing, downloadParser, openFileInfobar;
+
+setLabels({
+	EMBEDDED_IMAGE_BUTTON_MESSAGE,
+	SHARE_PAGE_BUTTON_MESSAGE,
+	SHARE_SELECTION_BUTTON_MESSAGE,
+	ERROR_TITLE_MESSAGE
+});
 
 if (!bootstrap || !bootstrap.initializedSingleFile) {
 	singlefile.init({ fetch, frameFetch });
@@ -83,12 +94,18 @@ async function onMessage(message) {
 			const result = await downloadParser.next(message.data);
 			if (result.done) {
 				downloadParser = null;
-				const link = document.createElement("a");
-				link.download = result.value.filename;
-				link.href = URL.createObjectURL(new Blob([result.value.content]), "text/html");
-				link.dispatchEvent(new MouseEvent("click"));
-				URL.revokeObjectURL(link.href);
-				await browser.runtime.sendMessage({ method: "downloads.end", taskId: result.value.taskId });
+				try {
+					await download.downloadPageForeground(result.value, {
+						foregroundSave: result.value.foregroundSave,
+						sharePage: result.value.sharePage,
+					});
+				} catch (error) {
+					return {
+						error: error.toString()
+					};
+				} finally {
+					await browser.runtime.sendMessage({ method: "downloads.end", taskId: result.value.taskId });
+				}
 			}
 			return {};
 		}
@@ -254,6 +271,9 @@ async function processPage(options) {
 			};
 			preInitializationAllPromises.then(() => resolve(preInitializationAllPromises));
 		});
+	}
+	if (options.delayBeforeProcessing) {
+		await new Promise(resolve => setTimeout(resolve, options.delayBeforeProcessing * 1000));
 	}
 	framesSessionId = options.frames && options.frames.sessionId;
 	const selectedFrame = options.frames && options.frames.find(frameData => frameData.requestedFrame);
