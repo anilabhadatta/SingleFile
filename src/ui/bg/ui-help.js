@@ -25,7 +25,6 @@
 
 let BACKGROUND_SAVE_SUPPORTED,
 	AUTO_SAVE_SUPPORTED,
-	OPEN_SAVED_PAGE_SUPPORTED,
 	AUTO_OPEN_EDITOR_SUPPORTED,
 	INFOBAR_SUPPORTED,
 	BOOKMARKS_API_SUPPORTED,
@@ -33,12 +32,12 @@ let BACKGROUND_SAVE_SUPPORTED,
 	CLIPBOARD_API_SUPPORTED,
 	NATIVE_API_API_SUPPORTED,
 	WEB_BLOCKING_API_SUPPORTED,
+	SHARE_API_SUPPORTED,
 	SELECTABLE_TABS_SUPPORTED;
 browser.runtime.sendMessage({ method: "config.getConstants" }).then(data => {
 	({
 		BACKGROUND_SAVE_SUPPORTED,
 		AUTO_SAVE_SUPPORTED,
-		OPEN_SAVED_PAGE_SUPPORTED,
 		AUTO_OPEN_EDITOR_SUPPORTED,
 		INFOBAR_SUPPORTED,
 		BOOKMARKS_API_SUPPORTED,
@@ -46,6 +45,7 @@ browser.runtime.sendMessage({ method: "config.getConstants" }).then(data => {
 		CLIPBOARD_API_SUPPORTED,
 		NATIVE_API_API_SUPPORTED,
 		WEB_BLOCKING_API_SUPPORTED,
+		SHARE_API_SUPPORTED,
 		SELECTABLE_TABS_SUPPORTED
 	} = data);
 	init();
@@ -67,9 +67,6 @@ function init() {
 		document.getElementById("bookmarksSection").hidden = true;
 		document.getElementById("bookmarksOptions").hidden = true;
 	}
-	if (!OPEN_SAVED_PAGE_SUPPORTED) {
-		document.getElementById("openSavedPageOption").hidden = true;
-	}
 	if (!AUTO_OPEN_EDITOR_SUPPORTED) {
 		document.getElementById("autoOpenEditorOption").hidden = true;
 	}
@@ -79,6 +76,7 @@ function init() {
 	if (!IDENTITY_API_SUPPORTED) {
 		document.getElementById("saveToGDriveOption").hidden = true;
 		document.getElementById("saveToGDriveHint").hidden = true;
+		document.getElementById("saveToDropboxOption").hidden = true;
 	}
 	if (!CLIPBOARD_API_SUPPORTED) {
 		document.getElementById("saveToClipboardOption").hidden = true;
@@ -88,6 +86,9 @@ function init() {
 	}
 	if (!WEB_BLOCKING_API_SUPPORTED) {
 		document.getElementById("passReferrerOnErrorOption").hidden = true;
+	}
+	if (!SHARE_API_SUPPORTED) {
+		document.getElementById("sharePageOption").hidden = true;
 	}
 	if (!SELECTABLE_TABS_SUPPORTED) {
 		document.getElementById("selectableTabsMenu").hidden = true;

@@ -15,11 +15,18 @@
 		<div id="titleBorder">
 			<h2>SingleFile</h2>
 			<h4>Save a complete page into a single HTML file</h4>
-		</div> <span id="index"> <a href="#getting-started">Getting started</a> - <a href="#general-notes">Additional
-				notes</a> - <a href="#options">Options description</a> - <a href="#annotation-editor">Annotation
-				editor</a> - <a href="#notes">Technical notes</a> - <a href="#template-variables">Template variables</a>
-			- <a href="#external-messages">Integration with other extensions</a> - <a href="#known-issues">Known
-				issues</a> - <a href="#unknown-issues">Troubleshooting unknown issues</a> -
+		</div>
+		<span id="index">
+			<a href="#getting-started">Getting started</a> -
+			<a href="#general-notes">Additional notes</a> -
+			<a href="#options">Options description</a> -
+			<a href="#annotation-editor">Annotation editor</a> -
+			<a href="#notes">Technical notes</a> -
+			<a href="#template-variables">Template variables</a> -
+			<a href="#template-functions">Template functions</a> -
+			<a href="#external-messages">Integration with other extensions</a> -
+			<a href="#known-issues">Known issues</a> -
+			<a href="#unknown-issues">Troubleshooting unknown issues</a> -
 			<a href="#contributors">Contributors</a> </span>
 		<hr>
 		<ol>
@@ -113,8 +120,7 @@
 						<p class="notice">It is recommended to <u>check</u> this option</p>
 					</li>
 					<li data-options-label="openSavedPageLabel" id="openSavedPageOption"> <span class="option">Option:
-							open saved pages in a new
-							tab</span>
+							open saved pages in a new tab</span>
 						<p>Check this option to display the saved page in a new tab. This option can be useful, for
 							example, in order to check the page is properly saved.</p>
 					</li>
@@ -128,8 +134,8 @@
 					<li data-options-label="filenameTemplateLabel"> <span class="option">Option: template</span>
 						<p>The template allows you to customize the file name of saved pages. You can use any valid
 							character and "/" to create sub-folders (with the option "save pages in background" active).
-							You can also use any variables from <a href="#template-variables">this list</a> anywhere in
-							the template.</p>
+							You can also use any variables from <a href="#template-variables">this list</a> and
+							functions from <a href="#template-functions">this list</a> anywhere in the template.</p>
 						<p>Invalid characters are automatically transformed and collapsed to underscores. File names
 							cannot exceed 192 characters and are truncated if longer. The invalid characters are:
 							<code>[</code> <code>~</code> <code>+</code> <code>\</code> <code>?</code> <code>%</code>
@@ -154,6 +160,22 @@
 						<p>Enter the maximum length of the filename (without the extension) and its unit (bytes or
 							characters).</p>
 					</li>
+					<li data-options-label="filenameReplacementCharacterLabel"> <span class="option">Option: replacement
+							character</span>
+						<p>Enter the character used to replace invalid characters in the filename.</p>
+					</li>
+					<li data-options-label="replaceEmojisInFilenameLabel">
+						<span class="option">Option: replace emojis with text</span>
+						<p>Check this option to replace emojis in the file name with their unicode text representation.
+						</p>
+					</li>
+					<li data-options-label="saveFilenameTemplateDataLabel">
+						<span class="option">Option: save the filename template data into the page</span>
+						<p>Check this option to save the template file data to the page. This allows you to recover
+							template data previously used when saving the page and, for example, to ensure that the file
+							is saved in the same directory as the original file when saving the page again.
+						</p>
+					</li>
 					<li data-options-label="confirmFilenameLabel" id="confirmFilenameOption"> <span
 							class="option">Option: open the "Save as"
 							dialog to confirm the file name</span>
@@ -168,9 +190,64 @@
 							existing ones on the filesystem. The "skip duplicate files" action only detects duplicates
 							among files downloaded during the current browsing session.</p>
 					</li>
-					<li data-options-label="replaceEmojisInFilenameLabel">
-						<span class="option">Option: replace emojis with text</span>
-						<p>Check this option to replace emojis in the file name with their unicode text representation.
+				</ul>
+				<p>File format</p>
+				<ul>
+					<li data-options-label="fileFormatSelectLabel">
+						<span class="option">Option: format</span>
+						<p>Select the output format of the saved file:
+						</p>
+						<ul>
+							<li><code>"HTML"</code>: HTML file (default format). This format produces HTML files that do
+								not depend on JavaScript to be opened.
+							</li>
+							<li><code>"self-extracting ZIP (universal)"</code>: self-extracting ZIP file that can be
+								opened on any platform. This format produces files smaller than the "HTML" format but
+								requires JavaScript to be enabled to open the file.
+							</li>
+							<li><code>"self-extracting ZIP"</code>: self-extracting ZIP file that can be
+								opened on any platform from HTTP but not from the filesystem in some browsers (e.g.
+								in browsers based on Chromium or WebKit) without SingleFile to be installed. This format
+								produces files smaller (approx. 1%) than the "self-extracting ZIP (universal)" format.
+							</li>
+							<li><code>"ZIP"</code>: ZIP file. This format produces ZIP files that cannot be opened in a
+								browser but can be opened in the annotation editor.
+							</li>
+						</ul>
+					</li>
+					<li data-options-label="passwordLabel">
+						<span class="option">Option: password</span>
+						<p>Type a password to encrypt the ZIP file with AES-256 (compatible with Winzip). Be careful, if
+							you lose the password, it will be impossible to open the file. Enabling this option
+							increases the CPU consumption and the time needed to save or read a page.</p>
+						</p>
+					</li>
+					<li data-options-label="createRootDirectoryLabel">
+						<span class="option">Option: create a root directory</span>
+						<p>Check this option to create a root directory in the ZIP file. The directory name consists of
+							a timestamp and the identifier of the tab where the saved page is displayed.
+						</p>
+					</li>
+					<li data-options-label="preventAppendedDataLabel">
+						<span class="option">Option: do not append data after the ZIP data</span>
+						<p>Check this option to remove the data appended after the ZIP data. The resulting file may be
+							easier to open with some archive managers that do not support ZIP files with appended data.
+							Enabling this option increases the time needed to save a page.
+						</p>
+					</li>
+					<li data-options-label="insertTextBodyLabel">
+						<span class="option">Option: make text searchable</span>
+						<p>Check this option to insert the text content of the saved page into the self-extracting ZIP
+							file. This makes it possible, for example, to search for pages from the text. Note that if
+							the selected fomrmat is "self-extracting ZIP (universal)", the text content is
+							encoded in UTF-8 but the page is declared in ISO-8859-1.
+						</p>
+					</li>
+					<li data-options-label="insertEmbeddedImageLabel">
+						<span class="option">Option: insert embedded images</span>
+						<p>Check this option to embed an image in all types of ZIP file, making them compatible with the
+							PNG format. This image is displayed when the archive renamed as a PNG file is opened in an
+							image viewer.
 						</p>
 					</li>
 				</ul>
@@ -294,7 +371,7 @@
 							images together</span>
 						<p>Check this option to avoid saving multiple times duplicate images. Checking this option
 							should not alter the document in modern browsers and can considerably reduce the size of the
-							file.</p>
+							file. This option is ignored with archive formats based on ZIP files.</p>
 						<p class="notice">It is recommended to <u>check</u> this option</p>
 					</li>
 					<li data-options-label="loadDeferredImagesLabel"> <span class="option">Option: save deferred
@@ -363,9 +440,17 @@
 						<p>Check this option to save the downloaded page on the filesystem of your computer.</p>
 						<p class="notice">It is recommended to <u>check</u> this option</p>
 					</li>
+					<li data-options-label="sharePageLabel" id="sharePageInput"> <span class="option">Option: share
+							page</span>
+						<p>Check this option to share the page with other applications. This option is only available in
+							browsers supporting the <a href="https://web.dev/web-share/" target="_blank">Web Share
+								API</a>.
+						<p class="notice">It is recommended to <u>uncheck</u> this option</p>
+					</li>
 					<li data-options-label="saveToClipboardLabel" id="saveToClipboardOption"> <span
 							class="option">Option: copy to clipboard</span>
-						<p>Check this option to copy the page to the clipboard.</p>
+						<p>Check this option to copy the page to the clipboard. This option does not work with
+							archive formats based on ZIP files.</p>
 						<p class="notice">It is recommended to <u>uncheck</u> this option</p>
 					</li>
 					<li data-options-label="saveToGitHubLabel"> <span class="option">Option: upload to GitHub</span>
@@ -417,12 +502,18 @@
 						<p>Enter your password.</p>
 					</li>
 					<li data-options-label="saveToGDriveLabel" id="saveToGDriveOption"> <span class="option">Option:
-							upload to Google
-							Drive</span>
+							upload to Google Drive</span>
 						<p>Check this option to save the page on Google Drive.</p>
 						<p>The permissions requested by SingleFile allow it to access only to the files and folders it
 							has created. When you uncheck this option, SingleFile revokes automatically its access to
-							your Google Drive account. </p>
+							your Google Drive account.</p>
+						<p class="notice">It is recommended to <u>uncheck</u> this option</p>
+					</li>
+					<li data-options-label="saveToDropboxLabel" id="saveToDropboxOption"> <span class="option">Option:
+							upload to Dropbox</span>
+						<p>Check this option to save the page on Dropbox.</p>
+						<p>The permissions requested by SingleFile allow it to access only to the files and folders it
+							has created.</p>
 						<p class="notice">It is recommended to <u>uncheck</u> this option</p>
 					</li>
 					<li data-options-label="saveWithCompanionLabel" id="saveWithCompanionOption"> <span
@@ -522,11 +613,16 @@
 						<p class="notice">It is recommended to <u>uncheck</u> this option</p>
 					</li>
 					<li data-options-label="autoOpenEditorLabel" id="autoOpenEditorOption"> <span class="option">Option:
-							open the annotation
-							editor when viewing a page saved with SingleFile </span>
+							open the annotation editor when viewing a page saved with SingleFile</span>
 						<p>Check this option to open the annotation editor when displaying a page saved by SingleFile.
 						</p>
 						<p class="notice">It is recommended to <u>uncheck</u> this option</p>
+					</li>
+					<li data-options-label="displayInfobarInEditorLabel"> <span class="option">Option:
+							display the infobar</span>
+						<p>Check this option to display the infobar when displaying a page in the annotation editor.</p>
+						<p class="notice">It is recommended to <u>uncheck</u> this option</p>
+						</p>
 					</li>
 				</ul>
 				<p id="bookmarksSection">Bookmarks</p>
@@ -810,12 +906,15 @@
 					<li><code>{url-protocol}</code>: the protocol of the URL (e.g. "https")</li>
 					<li><code>{url-host}</code>: the host name + the port of the URL (e.g. "example.com_8080")</li>
 					<li><code>{url-hostname}</code>: the host name of the URL (e.g. "example.com")</li>
+					<li><code>{url-hostname-suffix}</code>: the suffix of the host name of the URL (e.g. "com")</li>
+					<li><code>{url-hostname-domain}</code>: the domain of the host name of the URL (e.g. "example")</li>
+					<li><code>{url-hostname-root}</code>: the root of the host name of the URL (e.g. "example.com")</li>
+					<li><code>{url-hostname-subdomains}</code>: the sub-domains of the host name of the URL (e.g.
+						"sub" for "sub.example.com"), "www" is ignored</li>
 					<li><code>{url-port}</code>: the port of the URL (e.g. "8080")</li>
 					<li><code>{url-username}</code>: the user name of the URL (e.g. "john_doe")</li>
 					<li><code>{url-password}</code>: the password of the URL (e.g. "qwerty123")</li>
 					<li><code>{url-search}</code>: the search string of the URL (e.g. "order=ascending")</li>
-					<li><code>{url-search-&lt;name&gt;}</code>: the query parameter "&lt;name&gt;" in the the search
-						string of the URL (e.g. "url-search-order" will return "ascending" in the previous example)</li>
 					<li><code>{url-hash}</code>: the hash of the URL (e.g. "chapter-2")</li>
 					<li><code>{url-referrer}</code>: the URI of the page that "linked" to the page (e.g.
 						"http://example.com")</li>
@@ -834,6 +933,156 @@
 					<li><code>{digest-sha-384}</code>: the SHA-384 hash value of the entire page content</li>
 					<li><code>{digest-sha-512}</code>: the SHA-512 hash value of the entire page content</li>
 					<li><code>{profile-name}</code>: the name of the profile used to save the page</li>
+					<li><code>{filename-extension}</code>: the extension of the filename depending on the file format
+						(i.e. "html", "u.zip.html", "zip.html", "zip")</li>
+					<li><code>{save-action}</code>: the action used to save the page (i.e. "page", "selection")</li>
+				</ul>
+			</li>
+			<li><a id="template-functions" href="#template-functions">Template functions</a>
+				<p>The template functions are used to format values in the template or to insert values depending on
+					parameters.</p>
+				<p>The syntax of a function call is <code>%<em>function-name</em>&lt;<em>parameter</em>&gt;</code>.
+					You can pass multiple parameters separated with a pipe character (e.g.
+					"%<em>function-name</em>&lt;<em>parameter1</em>|<em>parameter2</em>&gt;"). Like the template
+					variables, you can limit the length of a dynamic value by adding <code>[<em>maxByteSize</em>]</code>
+					or <code>[<em>maxCharSize</em>ch]</code> just after the function name.
+				</p>
+				<ul>
+					<li><code>%if-empty&lt;value|default&gt;</code>: returns the <code>default</code> value if
+						<code>value</code> is empty (e.g. "%if-empty&lt;{page-title}|Untitled&gt;" to return "Untitled"
+						if the page title is empty).
+						You also can pass multiple values separated with a pipe character (e.g.
+						"%if-empty&lt;{page-title}|{page-heading}|Untitled&gt;" to return the page heading if not empty,
+						the page title if not empty or "Untitled" if both are empty).
+					</li>
+					<li><code>%if-not-empty&lt;value|default&gt;</code>: returns the <code>default</code> value if
+						<code>value</code> is not empty (e.g. "%if-not-empty&lt;{page-title}({page-title})&gt; to return
+						the page title surrounded by parentheses if the page title is not empty).
+						You also can pass multiple values separated like with the function <code>%if-empty</code>.
+					</li>
+					<li><code>%if-equals&lt;value|expected|trueValue|falseValue&gt;</code>: returns the
+						<code>trueValue</code> if <code>value</code> equals <code>expected</code> or the
+						<code>falseValue</code> otherwise (e.g.
+						"%if-equals&lt;{page-title}|Untitled|{page-heading}|{page-title}&gt;"
+						to return the page heading if the page title equals "Untitled" or the page title otherwise).
+					<li><code>%if-not-equals&lt;value|expected|trueValue|falseValue&gt;</code>: returns the
+						<code>trueValue</code> if <code>value</code> does not equal <code>expected</code> or the
+						<code>falseValue</code> otherwise (e.g.
+						"%if-not-equals&lt;{page-title}|Untitled|{page-title}|{page-heading}&gt;"
+						to return the page heading if the page title does not equal "Untitled" or the page title
+						otherwise).
+					<li><code>%if-contains&lt;value|expected|trueValue|falseValue&gt;</code>: returns the
+						<code>trueValue</code> if <code>value</code> contains <code>expected</code> or the
+						<code>falseValue</code> otherwise (e.g.
+						"%if-contains&lt;{page-title}|Untitled|{page-heading}|{page-title}&gt;"
+						to return the page heading if the page title contains "Untitled" or the page title otherwise).
+					</li>
+					<li><code>%if-not-contains&lt;value|expected|trueValue|falseValue&gt;</code>: returns the
+						<code>trueValue</code> if <code>value</code> does not contain <code>expected</code> or the
+						<code>falseValue</code> otherwise (e.g.
+						"%if-not-contains&lt;{page-title}|Untitled|{page-title}|{page-heading}&gt;"
+						to return the page heading if the page title does not contain "Untitled" or the page title
+						otherwise).
+					</li>
+					<li><code>%substring&lt;value|start|end&gt;</code>: returns a substring of the <code>value</code>
+						(e.g. "%substring&lt;{page-title}|0|20&gt;" to return the first 20 characters of the page
+						title, "%substring&lt;{page-title}|5&gt;" to return the page title without the first 5
+						characters).
+					</li>
+					<li><code>%lowercase&lt;value&gt;</code>: returns the <code>value</code> in lowercase (e.g.
+						"%lowercase&lt;{page-title}&gt;" to return the page title in lowercase).
+					</li>
+					<li><code>%uppercase&lt;value&gt;</code>: returns the <code>value</code> in uppercase (e.g.
+						"%uppercase&lt;{page-title}&gt;" to return the page title in uppercase).
+					</li>
+					<li><code>%capitalize&lt;value&gt;</code>: returns the <code>value</code> with the first letter in
+						uppercase (e.g. "%capitalize&lt;{page-title}&gt;" to return the page title with the first letter
+						in uppercase).
+					</li>
+					<li><code>%replace&lt;value|search|replacement&gt;</code>: returns the <code>value</code> with
+						all <code>search</code> values replaced by <code>replacement</code> (e.g.
+						"%replace&lt;{page-title}| |_&gt;" to replace all spaces by underscores in the page title).
+					</li>
+					<li><code>%repeat&lt;value|count&gt;</code>: returns the <code>value</code> repeated
+						<code>count</code> times (e.g. "%repeat&lt;{page-title}|3&gt;" to repeat the page title 3
+						times).
+					</li>
+					<li><code>%index-of&lt;value|search|fromIndex&gt;</code>: returns the index of the first occurrence
+						of <code>search</code> in <code>value</code> (e.g. "%index-of&lt;{page-title}|"Title"&gt;" to
+						return the index of the first occurrence of the string "Title" in <code>page-title</code>).
+					</li>
+					<li><code>%last-index-of&lt;value|search|fromIndex&gt;</code>: returns the index of the last
+						occurrence of <code>search</code> in <code>value</code> (e.g.
+						"%last-index-of&lt;{page-title}|"Title"&gt;" to return the index of the last occurrence of the
+						string "Title" in <code>page-title</code>).
+					</li>
+					<li><code>%length&lt;value&gt;</code>: returns the length of the <code>value</code> (e.g.
+						"%length&lt;{page-title}&gt;" to return the length of the page title).
+					</li>
+					<li><code>%trim&lt;value&gt;</code>: returns the <code>value</code> with all leading and trailing
+						whitespace removed (e.g. "%trim&lt;{page-title}&gt;" to remove all leading and trailing
+						whitespace in the page title).
+					</li>
+					<li><code>%trim-left&lt;value&gt;</code>: returns the <code>value</code> with all leading
+						whitespace removed (e.g. "%trim-left&lt;{page-title}&gt;" to remove all leading whitespace in
+						the page title).
+					</li>
+					<li><code>%trim-right&lt;value&gt;</code>: returns the <code>value</code> with all trailing
+						whitespace removed (e.g. "%trim-right&lt;{page-title}&gt;" to remove all trailing whitespace in
+						the page title).
+					</li>
+					<li><code>%pad-left&lt;value|length|pad&gt;</code>: returns the <code>value</code> with
+						<code>pad</code> added to the left side so as to make the length of the <code>value</code> equal
+						to <code>length</code> (e.g. "%pad-left&lt;{page-title}|20|_&gt;" to add underscores to the left
+						side of the page title so as to make its length equal to 20).
+					</li>
+					<li><code>%pad-right&lt;value|length|pad&gt;</code>: returns the <code>value</code> with
+						<code>pad</code> added to the right side so as to make the length of the <code>value</code>
+						equal to <code>length</code> (e.g. "%pad-right&lt;{page-title}|20|_&gt;" to add underscores to
+						the right side of the page title so as to make its length equal to 20).
+					</li>
+					<li><code>%url-search-name&lt;index&gt;</code>: the name of the search parameter at the specified
+						index (e.g. "%url-search-name&lt;0&gt;" for the name of the first search parameter)
+					</li>
+					<li><code>%url-search-value&lt;index&gt;</code>: the value of the search parameter at the specified
+						index (e.g. "%url-search-value&lt;0&gt;" for the value of the first search parameter)
+					</li>
+					<li><code>%url-search-named-value&lt;name&gt;</code>: the value of the search parameter with the
+						specified name (e.g. "%url-search-named-value&lt;id&gt;" for the value of the search parameter
+						"id")
+					</li>
+					<li><code>%url-segment&lt;index&gt;</code>: the segment of the pathname at the specified index (e.g.
+						"%url-segment&lt;0&gt;" for the first segment of the pathname)
+					</li>
+					<li><code>%url-hostname-subdomain&lt;index&gt;</code>: the subdomain of the hostname at the
+						specified index (e.g. "%url-hostname-subdomain&lt;0&gt;" for the first subdomain of the
+						hostname)
+					</li>
+					<li><code>%stringify&lt;value&gt;</code>: the string representation of the specified value (e.g.
+						"%stringify&lt;{page-title}&gt;" for the string representation of the page title)
+					</li>
+					<li><code>%encode-uri&lt;value&gt;</code>: the URI-encoded representation of the specified value
+						(e.g. "%encode-uri&lt;{page-title}&gt;" for the URI-encoded representation of the page title)
+					</li>
+					<li><code>%decode-uri&lt;value&gt;</code>: the URI-decoded representation of the specified value
+						(e.g. "%decode-uri&lt;{page-title}&gt;" for the URI-decoded representation of the page title)
+					</li>
+					<li><code>%encode-uri-component&lt;value&gt;</code>: the URI-encoded representation of the
+						specified value (e.g. "%encode-uri-component&lt;{page-title}&gt;" for the URI-encoded
+						representation of the page title)
+					</li>
+					<li><code>%decode-uri-component&lt;value&gt;</code>: the URI-decoded representation of the
+						specified value (e.g. "%decode-uri-component&lt;{page-title}&gt;" for the URI-decoded
+						representation of the page title)
+					</li>
+					<li><code>%page-element-text&lt;selector&gt;</code>: the text content of the first element matching
+						the specified selector (e.g. "%page-element-text&lt;h1&gt;" for the text content of the first H1
+						element)
+					</li>
+					<li><code>%page-element-attribute&lt;selector|attribute&gt;</code>: the value of the specified
+						attribute of the first element matching the specified selector (e.g.
+						"%page-element-attribute&lt;h1|class&gt;" for the class attribute of the first H1 element)
+					</li>
 				</ul>
 			</li>
 			<li>
@@ -848,7 +1097,7 @@
 						<code>"edit-and-save-page"</code>: edit the current page in the annotation editor and save it
 					</li>
 					<li>
-						<code>"save-selected-links"</code>: save the selected links
+						<code>"save-selected-links"</code>: save all the links in the selected content
 					</li>
 					<li>
 						<code>"save-selected-content"</code>: save the selected content
@@ -887,7 +1136,12 @@
 							<li>The last saved path cannot be remembered by default. To circumvent this limitation,
 								disable the option "Misc. &gt; Save pages in background".</li>
 							<li>The following characters are replaced with _ in filenames: ~, +, \, ?, %, *, :, |, ",
-								&lt;, &gt;</li>
+								&lt;, &gt;. This is done to maintain compatibility with various OSs and file systems.
+								If you don't need that level of compatibility and know what you are doing, you can
+								change the list of forbidden characters in
+								<a href="https://github.com/gildas-lormeau/SingleFile/wiki/Hidden-options">Hidden
+									options</a>.
+							</li>
 						</ul>
 					</li>
 					<li>Chromium-based browsers
@@ -952,7 +1206,11 @@
 					<li>Polish translation done by xesarni (<a href="https://github.com/xesarni" target="_blank">GitHub
 							profile</a>)
 					</li>
-					<li>Portuguese-Brazilian translation done by @mezysinc
+					<li>Portuguese translation done by @Blackspirits (<a href="https://github.com/Blackspirit"
+							target="_blank">GitHub profile</a>)
+					</li>
+					<li>Portuguese-Brazilian translation done by @mezysinc, Blackspirits (<a
+							href="https://github.com/Blackspirit" target="_blank">GitHub profile</a>)
 					</li>
 					<li>Russian translation done by rstp14 (<a href="https://github.com/rstp14" target="_blank">GitHub
 							profile</a>), kramola-RU (<a href="https://github.com/kramola-RU" target="_blank">GitHub

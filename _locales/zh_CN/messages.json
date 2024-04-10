@@ -207,9 +207,17 @@
 		"message": "字符",
 		"description": "Options page label: 'characters'"
 	},
-	"optionReplaceEmojisInFilename" : {
-		"message": "用文本替换表情符号",
+	"optionFilenameReplacementCharacter": {
+		"message": "替换字符",
+		"description": "Options page label: 'replacement character'"
+	},
+	"optionReplaceEmojisInFilename": {
+		"message": "用文字替换表情符号",
 		"description": "Options page label: 'replace emojis with text'"
+	},
+	"optionSaveFilenameTemplateData": {
+		"message": "将文件名模板数据保存到页面中",
+		"description": "Options page label: 'save the filename template data into the page'"
 	},
 	"optionConfirmFilename": {
 		"message": "打开 “另存为” 对话框以确认文件名",
@@ -251,6 +259,50 @@
 		"message": "移除隐藏元素",
 		"description": "Options page label: 'remove hidden elements'"
 	},
+	"optionsFileFormatSubTitle": {
+		"message": "文件格式",
+		"description": "Options sub-title: 'File format'"
+	},
+	"optionFileFormat": {
+		"message": "格式",
+		"description": "Options page label: 'format'"
+	},
+	"optionFileFormatSelectHTML": {
+		"message": "HTML",
+		"description": "Options page label: 'HTML'"
+	},
+	"optionFileFormatSelectSelfExtractingUniversal": {
+		"message": "自解压缩 ZIP（通用）",
+		"description": "Options page label: 'self-extracting ZIP (universal)'"
+	},
+	"optionFileFormatSelectSelfExtracting": {
+		"message": "自解压缩 ZIP",
+		"description": "Options page label: 'self-extracting ZIP'"
+	},
+	"optionFileFormatSelectZIP": {
+		"message": "ZIP",
+		"description": "Options page label: 'ZIP'"
+	},
+	"optionPassword": {
+		"message": "密码",
+		"description": "Options page label: 'password'"
+	},
+	"optionCreateRootDirectory": {
+		"message": "创建根目录",
+		"description": "Options page label: 'create a root directory'"
+	},
+	"optionPreventAppendedData": {
+		"message": "不要在 ZIP 数据后添加数据",
+		"description": "Options page label: 'do not append data after the ZIP data'"
+	},
+	"optionInsertTextBody": {
+		"message": "使文本可被搜索",
+		"description": "Options page label: 'make text searchable'"
+	},
+	"optionInsertEmbeddedImage": {
+		"message": "嵌入图像",
+		"description": "Options page label: 'insert embedded image'"
+	},
 	"optionsInfobarSubTitle": {
 		"message": "信息栏",
 		"description": "Options sub-title: 'Infobar'"
@@ -280,7 +332,7 @@
 		"description": "Options page label: 'dispatch \"scroll\" event'"
 	},
 	"optionLoadDeferredImagesBeforeFrames": {
-		"message": "load deferred frames",
+		"message": "加载延迟框架",
 		"description": "Options page label: 'load deferred frames'"
 	},
 	"optionRemoveAlternativeImages": {
@@ -511,6 +563,10 @@
 		"message": "离开标注编辑器时提醒保存已修改的内容",
 		"description": "Title of the button 'warn if leaving page with unsaved changes'"
 	},
+	"optionDisplayInfobarInEditor": {
+		"message": "显示信息栏",
+		"description": "Title of the button 'display the infobar'"
+	},
 	"optionsMiscSubTitle": {
 		"message": "杂项",
 		"description": "Options sub-title: 'Misc.'"
@@ -559,6 +615,10 @@
 		"message": "保存到文件系统",
 		"description": "Options page label: 'save to filesystem'"
 	},
+	"optionSharePage": {
+		"message": "分享页面",
+		"description": "Options page label: 'share page'"
+	},
 	"optionAddProof": {
 		"message": "添加证明文件存在的指纹",
 		"description": "Options page label: 'add proof of existence'"
@@ -574,6 +634,10 @@
 	"optionSaveToGDrive": {
 		"message": "保存到 Google Drive",
 		"description": "Options page label: 'upload to Google Drive'"
+	},
+	"optionSaveToDropbox": {
+		"message": "保存到 Dropbox",
+		"description": "Options page label: 'upload to Dropbox'"
 	},
 	"optionSaveToGitHub": {
 		"message": "保存到 GitHub",
@@ -683,6 +747,10 @@
 		"message": "框架内容",
 		"description": "Label 'Frame contents' in the log panel"
 	},
+	"logPanelEmbeddedImage": {
+		"message": "嵌入图像",
+		"description": "Label 'Embedded image' in the log panel"
+	},
 	"logPanelStep": {
 		"message": "步骤",
 		"description": "Label 'Step' (for 'Step x / 4') in the log panel"
@@ -690,6 +758,22 @@
 	"logPanelWidth": {
 		"message": "122",
 		"description": "Width of the log panel in pixels, it should be adjusted for the longest label beginning with 'log' (e.g. 'logPanelDeferredImages')"
+	},
+	"topPanelError": {
+		"message": "SingleFile 错误：",
+		"description": "Label 'SingleFile error: ' in the top panel when displaying an error message"
+	},
+	"topPanelEmbeddedImageButton": {
+		"message": "打开图片...",
+		"description": "Top panel button 'Open image...' when embedding an image"
+	},
+	"topPanelSharePageButton": {
+		"message": "分享页面...",
+		"description": "Top panel button 'Share page...' when sharing a page"
+	},
+	"topPanelShareSelectionButton": {
+		"message": "分享选中内容...",
+		"description": "Top panel button 'Share selection...' when sharing selected content"
 	},
 	"profileDefaultSettings": {
 		"message": "默认设置",

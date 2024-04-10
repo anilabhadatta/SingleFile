@@ -207,9 +207,17 @@
 		"message": "znaki",
 		"description": "Options page label: 'characters'"
 	},
-	"optionReplaceEmojisInFilename" : {
+	"optionFilenameReplacementCharacter": {
+		"message": "znak zastępczy",
+		"description": "Options page label: 'replacement character'"
+	},
+	"optionReplaceEmojisInFilename": {
 		"message": "zamień emotikony na tekst",
 		"description": "Options page label: 'replace emojis with text'"
+	},
+	"optionSaveFilenameTemplateData": {
+		"message": "zapisz dane szablonu nazwy pliku na stronie",
+		"description": "Options page label: 'save the filename template data into the page'"
 	},
 	"optionConfirmFilename": {
 		"message": "otwieraj okno \"Zapisz jako\", aby potwierdzić nazwę pliku",
@@ -250,6 +258,50 @@
 	"optionRemoveHiddenElements": {
 		"message": "usuwaj ukryte elementy",
 		"description": "Options page label: 'remove hidden elements'"
+	},
+	"optionsFileFormatSubTitle": {
+		"message": "Format pliku",
+		"description": "Options sub-title: 'File format'"
+	},
+	"optionFileFormat": {
+		"message": "format",
+		"description": "Options page label: 'format'"
+	},
+	"optionFileFormatSelectHTML": {
+		"message": "HTML",
+		"description": "Options page label: 'HTML'"
+	},
+	"optionFileFormatSelectSelfExtractingUniversal": {
+		"message": "samorozpakowujący się plik ZIP (uniwersalny)",
+		"description": "Options page label: 'self-extracting ZIP (universal)'"
+	},
+	"optionFileFormatSelectSelfExtracting": {
+		"message": "samorozpakowujący się plik ZIP",
+		"description": "Options page label: 'self-extracting ZIP'"
+	},
+	"optionFileFormatSelectZIP": {
+		"message": "ZIP",
+		"description": "Options page label: 'ZIP'"
+	},
+	"optionCreateRootDirectory": {
+		"message": "utwórz katalog główny",
+		"description": "Options page label: 'create a root directory'"
+	},
+	"optionPreventAppendedData": {
+		"message": "nie dołączaj danych po danych ZIP",
+		"description": "Options page label: 'do not append data after the ZIP data'"
+	},
+	"optionPassword": {
+		"message": "hasło",
+		"description": "Options page label: 'password'"
+	},
+	"optionInsertTextBody": {
+		"message": "uczyń tekst przeszukiwalnym",
+		"description": "Options page label: 'make text searchable'"
+	},
+	"optionInsertEmbeddedImage": {
+		"message": "wstaw osadzony obraz",
+		"description": "Options page label: 'insert embedded image'"
 	},
 	"optionsInfobarSubTitle": {
 		"message": "Pasek informacyjny",
@@ -511,6 +563,10 @@
 		"message": "ostrzegaj, jeśli opuszczasz stronę z niezapisanymi zmianami",
 		"description": "Title of the button 'warn if leaving page with unsaved changes'"
 	},
+	"optionDisplayInfobarInEditor": {
+		"message": "wyświetlanie paska informacyjnego",
+		"description": "Title of the button 'display the infobar'"
+	},
 	"optionsMiscSubTitle": {
 		"message": "Różne",
 		"description": "Options sub-title: 'Misc.'"
@@ -559,6 +615,10 @@
 		"message": "zapisuj do systemu plików",
 		"description": "Options page label: 'save to filesystem'"
 	},
+	"optionSharePage": {
+		"message": "udostępnij stronę",
+		"description": "Options page label: 'share page'"
+	},
 	"optionAddProof": {
 		"message": "dodawaj dowód istnienia",
 		"description": "Options page label: 'add proof of existence'"
@@ -574,6 +634,10 @@
 	"optionSaveToGDrive": {
 		"message": "przesyłaj na Dysk Google",
 		"description": "Options page label: 'upload to Google Drive'"
+	},
+	"optionSaveToDropbox": {
+		"message": "przesyłaj na Dropbox",
+		"description": "Options page label: 'upload to Dropbox'"
 	},
 	"optionSaveToGitHub": {
 		"message": "przesyłaj do GitHuba",
@@ -683,6 +747,10 @@
 		"message": "Zawartość ramki",
 		"description": "Label 'Frame contents' in the log panel"
 	},
+	"logPanelEmbeddedImage": {
+		"message": "Osadzony obraz",
+		"description": "Label 'Embedded image' in the log panel"
+	},
 	"logPanelStep": {
 		"message": "Krok",
 		"description": "Label 'Step' (for 'Step x / 4') in the log panel"
@@ -690,6 +758,22 @@
 	"logPanelWidth": {
 		"message": "130",
 		"description": "Width of the log panel in pixels, it should be adjusted for the longest label beginning with 'log' (e.g. 'logPanelDeferredImages')"
+	},
+	"topPanelError": {
+		"message": "Błąd SingleFile: ",
+		"description": "Label 'SingleFile error: ' in the top panel when displaying an error message"
+	},
+	"topPanelEmbeddedImageButton": {
+		"message": "Otwórz obraz...",
+		"description": "Top panel button 'Open image...' when embedding an image"
+	},
+	"topPanelSharePageButton": {
+		"message": "Udostępnij stronę...",
+		"description": "Top panel button 'Share page...' when sharing a page"
+	},
+	"topPanelShareSelectionButton": {
+		"message": "Udostępnij wybór...",
+		"description": "Top panel button 'Share selection...' when sharing selected content"
 	},
 	"profileDefaultSettings": {
 		"message": "Ustawienia domyślne",

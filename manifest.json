@@ -8,7 +8,7 @@
 		"64": "src/ui/resources/icon_64.png",
 		"128": "src/ui/resources/icon_128.png"
 	},
-	"version": "1.21.47",
+	"version": "1.22.46",
 	"description": "__MSG_extensionDescription__",
 	"content_scripts": [
 		{
@@ -30,6 +30,7 @@
 			],
 			"run_at": "document_start",
 			"js": [
+				"lib/web-stream.js",
 				"lib/chrome-browser-polyfill.js",
 				"lib/single-file-bootstrap.js",
 				"lib/single-file-extension-bootstrap.js",
@@ -83,6 +84,9 @@
 		"lib/single-file-extension-editor-init.js",
 		"lib/single-file-extension-editor.js",
 		"lib/single-file-extension-editor-helper.js",
+		"lib/single-file-zip.min.js",
+		"lib/single-file-z-worker.js",
+		"lib/web-stream.js",
 		"src/lib/readability/Readability.js",
 		"src/lib/readability/Readability-readerable.js",
 		"src/ui/pages/editor-note-web.css",
@@ -90,7 +94,7 @@
 		"src/ui/pages/editor-frame-web.css"
 	],
 	"oauth2": {
-		"client_id": "207618107333-3pj2pmelhnl4sf3rpctghs9cean3q8nj.apps.googleusercontent.com",
+		"client_id": "207618107333-7tjs1im1pighftpoepea2kvkubnfjj44.apps.googleusercontent.com",
 		"scopes": [
 			"https://www.googleapis.com/auth/drive.file"
 		]
@@ -115,7 +119,8 @@
 	"browser_specific_settings": {
 		"gecko": {
 			"id": "{531906d3-e22f-4a6c-a102-8057b88a1a63}"
-		}
+		},
+		"gecko_android": {}
 	},
 	"devtools_page": "src/core/devtools/devtools.html",
 	"incognito": "spanning",

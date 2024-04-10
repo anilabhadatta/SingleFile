@@ -21,14 +21,25 @@
  *   Source.
  */
 
-import * as serializer from "single-file-core/modules/html-serializer.js";
+/* global document, globalThis, location, singlefile, fetch, URLSearchParams, prompt */
 
-const helper = {
-	serialize(doc, compressHTML) {
-		return serializer.process(doc, compressHTML);
+import * as zip from "../../../lib/single-file-zip.js";
+
+globalThis.zip = zip;
+globalThis.onload = async () => {
+	const params = new URLSearchParams(location.search);
+	const blobURI = params.get("blobURI");
+	if (blobURI.startsWith("blob:")) {
+		const compressed = params.has("compressed");
+		const response = await fetch(blobURI);
+		if (compressed) {
+			const blob = await response.blob();
+			const { docContent } = await singlefile.helper.extract(blob, { prompt });
+			await singlefile.helper.display(document, docContent);
+		} else {
+			const text = await response.text();
+			document.write(text);
+			document.close();
+		}
 	}
-};
-
-export {
-	helper
 };

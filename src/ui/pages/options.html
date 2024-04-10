@@ -61,6 +61,20 @@
 					</select>
 				</div>
 			</div>
+			<div class="option">
+				<label for="filenameReplacementCharacterInput" id="filenameReplacementCharacterLabel"></label>
+				<div class="option-input">
+					<input type="text" id="filenameReplacementCharacterInput" class="small-input">
+				</div>
+			</div>
+			<div class="option">
+				<label for="replaceEmojisInFilenameInput" id="replaceEmojisInFilenameLabel"></label>
+				<input type="checkbox" id="replaceEmojisInFilenameInput">
+			</div>
+			<div class="option">
+				<label for="saveFilenameTemplateDataInput" id="saveFilenameTemplateDataLabel"></label>
+				<input type="checkbox" id="saveFilenameTemplateDataInput">
+			</div>
 			<div class="option" id="confirmFilenameOption">
 				<label for="confirmFilenameInput" id="confirmFilenameLabel"></label>
 				<input type="checkbox" id="confirmFilenameInput">
@@ -74,9 +88,37 @@
 					<option id="filenameConflictActionSkipLabel" value="skip"></option>
 				</select>
 			</div>
+		</details>
+		<details>
+			<summary id="fileFormatLabel"></summary>
 			<div class="option">
-				<label for="replaceEmojisInFilenameInput" id="replaceEmojisInFilenameLabel"></label>
-				<input type="checkbox" id="replaceEmojisInFilenameInput">
+				<label for="fileFormatSelectInput" id="fileFormatSelectLabel"></label>
+				<select id="fileFormatSelectInput">
+					<option id="fileFormatSelectHTMLLabel" value="html"></option>
+					<option id="fileFormatSelectSelfExtractingUniversalLabel" value="self-extracting-zip-universal"></option>
+					<option id="fileFormatSelectSelfExtractingLabel" value="self-extracting-zip"></option>
+					<option id="fileFormatSelectZIPLabel" value="zip"></option>
+				</select>
+			</div>
+			<div class="option vertical">
+				<label for="passwordInput" id="passwordLabel"></label>
+				<input type="text" id="passwordInput">
+			</div>
+			<div class="option">
+				<label for="createRootDirectoryInput" id="createRootDirectoryLabel"></label>
+				<input type="checkbox" id="createRootDirectoryInput">
+			</div>
+			<div class="option">
+				<label for="preventAppendedDataInput" id="preventAppendedDataLabel"></label>
+				<input type="checkbox" id="preventAppendedDataInput">
+			</div>
+			<div class="option">
+				<label for="insertTextBodyInput" id="insertTextBodyLabel"></label>
+				<input type="checkbox" id="insertTextBodyInput">
+			</div>
+			<div class="option">
+				<label for="insertEmbeddedImageInput" id="insertEmbeddedImageLabel"></label>
+				<input type="checkbox" id="insertEmbeddedImageInput">
 			</div>
 		</details>
 		<details>
@@ -197,6 +239,10 @@
 				<label for="saveToFilesystemInput" id="saveToFilesystemLabel"></label>
 				<input type="radio" id="saveToFilesystemInput" name="destinationInput">
 			</div>
+			<div class="option" id="sharePageOption">
+				<label for="sharePageInput" id="sharePageLabel"></label>
+				<input type="radio" id="sharePageInput" name="destinationInput">
+			</div>
 			<div class="option" id="saveToClipboardOption">
 				<label for="saveToClipboardInput" id="saveToClipboardLabel"></label>
 				<input type="radio" id="saveToClipboardInput" name="destinationInput">
@@ -240,6 +286,10 @@
 			<div class="option" id="saveToGDriveOption">
 				<label for="saveToGDriveInput" id="saveToGDriveLabel"></label>
 				<input type="radio" id="saveToGDriveInput" name="destinationInput">
+			</div>
+			<div class="option" id="saveToDropboxOption">
+				<label for="saveToDropboxInput" id="saveToDropboxLabel"></label>
+				<input type="radio" id="saveToDropboxInput" name="destinationInput">
 			</div>
 			<div class="option" id="saveWithCompanionOption">
 				<label for="saveWithCompanionInput" id="saveWithCompanionLabel"></label>
@@ -358,6 +408,10 @@
 			<div class="option" id="autoOpenEditorOption">
 				<label for="autoOpenEditorInput" id="autoOpenEditorLabel"></label>
 				<input type="checkbox" id="autoOpenEditorInput">
+			</div>
+			<div class="option">
+				<label for="displayInfobarInEditorInput" id="displayInfobarInEditorLabel"></label>
+				<input type="checkbox" id="displayInfobarInEditorInput">
 			</div>
 		</details>
 		<details id="bookmarksOptions">

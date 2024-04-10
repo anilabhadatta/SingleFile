@@ -21,97 +21,197 @@
  *   Source.
  */
 
-/* global browser, infobar, document, URL, Blob, MouseEvent, setTimeout, open */
+/* global browser, document, URL, Blob, MouseEvent, setTimeout, open, navigator, File */
 
-const MAX_CONTENT_SIZE = 32 * (1024 * 1024);
+import * as yabson from "./../../lib/yabson/yabson.js";
+import { getSharePageBar, setLabels } from "./../../ui/common/common-content-ui.js";
+
+const MAX_CONTENT_SIZE = 16 * (1024 * 1024);
+
+let EMBEDDED_IMAGE_BUTTON_MESSAGE, SHARE_PAGE_BUTTON_MESSAGE, SHARE_SELECTION_BUTTON_MESSAGE, ERROR_TITLE_MESSAGE;
+
+try {
+	EMBEDDED_IMAGE_BUTTON_MESSAGE = browser.i18n.getMessage("topPanelEmbeddedImageButton");
+	SHARE_PAGE_BUTTON_MESSAGE = browser.i18n.getMessage("topPanelSharePageButton");
+	SHARE_SELECTION_BUTTON_MESSAGE = browser.i18n.getMessage("topPanelShareSelectionButton");
+	ERROR_TITLE_MESSAGE = browser.i18n.getMessage("topPanelError");
+} catch (error) {
+	// ignored
+}
+
+let sharePageBar;
+setLabels({
+	EMBEDDED_IMAGE_BUTTON_MESSAGE,
+	SHARE_PAGE_BUTTON_MESSAGE,
+	SHARE_SELECTION_BUTTON_MESSAGE,
+	ERROR_TITLE_MESSAGE
+});
 
 export {
-	downloadPage
+	downloadPage,
+	downloadPageForeground
 };
 
 async function downloadPage(pageData, options) {
 	if (options.includeBOM) {
 		pageData.content = "\ufeff" + pageData.content;
 	}
-	if (options.includeInfobar) {
-		pageData.content += await infobar.getScript();
-	}
-	if (options.backgroundSave || options.openEditor || options.saveToGDrive || options.saveToGitHub || options.saveWithCompanion || options.saveWithWebDAV) {
-		for (let blockIndex = 0; blockIndex * MAX_CONTENT_SIZE < pageData.content.length; blockIndex++) {
-			const message = {
+	const embeddedImage = options.embeddedImage;
+	const message = {
+		method: "downloads.download",
+		taskId: options.taskId,
+		insertTextBody: options.insertTextBody,
+		confirmFilename: options.confirmFilename,
+		filenameConflictAction: options.filenameConflictAction,
+		filename: pageData.filename,
+		mimeType: pageData.mimeType,
+		saveToClipboard: options.saveToClipboard,
+		saveToGDrive: options.saveToGDrive,
+		saveToDropbox: options.saveToDropbox,
+		saveWithWebDAV: options.saveWithWebDAV,
+		webDAVURL: options.webDAVURL,
+		webDAVUser: options.webDAVUser,
+		webDAVPassword: options.webDAVPassword,
+		saveToGitHub: options.saveToGitHub,
+		githubToken: options.githubToken,
+		githubUser: options.githubUser,
+		githubRepository: options.githubRepository,
+		githubBranch: options.githubBranch,
+		saveWithCompanion: options.saveWithCompanion,
+		forceWebAuthFlow: options.forceWebAuthFlow,
+		filenameReplacementCharacter: options.filenameReplacementCharacter,
+		openEditor: options.openEditor,
+		openSavedPage: options.openSavedPage,
+		compressHTML: options.compressHTML,
+		backgroundSave: options.backgroundSave,
+		bookmarkId: options.bookmarkId,
+		replaceBookmarkURL: options.replaceBookmarkURL,
+		applySystemTheme: options.applySystemTheme,
+		defaultEditorMode: options.defaultEditorMode,
+		includeInfobar: options.includeInfobar,
+		warnUnsavedPage: options.warnUnsavedPage,
+		createRootDirectory: options.createRootDirectory,
+		selfExtractingArchive: options.selfExtractingArchive,
+		embeddedImage: embeddedImage ? Array.from(embeddedImage) : null,
+		preventAppendedData: options.preventAppendedData,
+		extractDataFromPage: options.extractDataFromPage,
+		insertCanonicalLink: options.insertCanonicalLink,
+		insertMetaNoIndex: options.insertMetaNoIndex,
+		insertMetaCSP: options.insertMetaCSP,
+		password: options.password,
+		compressContent: options.compressContent,
+		foregroundSave: options.foregroundSave,
+		sharePage: options.sharePage
+	};
+	if (options.compressContent) {
+		const blob = new Blob([await yabson.serialize(pageData)], { type: pageData.mimeType });
+		const blobURL = URL.createObjectURL(blob);
+		message.blobURL = blobURL;
+		const result = await browser.runtime.sendMessage(message);
+		URL.revokeObjectURL(blobURL);
+		if (result.error) {
+			message.embeddedImage = embeddedImage;
+			message.blobURL = null;
+			message.pageData = pageData;
+			let data, indexData = 0;
+			const dataArray = await yabson.serialize(message);
+			do {
+				data = Array.from(dataArray.slice(indexData, indexData + MAX_CONTENT_SIZE));
+				indexData += MAX_CONTENT_SIZE;
+				await browser.runtime.sendMessage({
+					method: "downloads.download",
+					compressContent: true,
+					data
+				});
+			} while (data.length);
+			await browser.runtime.sendMessage({
 				method: "downloads.download",
-				taskId: options.taskId,
-				confirmFilename: options.confirmFilename,
-				filenameConflictAction: options.filenameConflictAction,
-				filename: pageData.filename,
-				saveToClipboard: options.saveToClipboard,
-				saveToGDrive: options.saveToGDrive,
-				saveWithWebDAV: options.saveWithWebDAV,
-				webDAVURL: options.webDAVURL,
-				webDAVUser: options.webDAVUser,
-				webDAVPassword: options.webDAVPassword,
-				saveToGitHub: options.saveToGitHub,
-				githubToken: options.githubToken,
-				githubUser: options.githubUser,
-				githubRepository: options.githubRepository,
-				githubBranch: options.githubBranch,
-				saveWithCompanion: options.saveWithCompanion,
-				forceWebAuthFlow: options.forceWebAuthFlow,
-				filenameReplacementCharacter: options.filenameReplacementCharacter,
-				openEditor: options.openEditor,
-				openSavedPage: options.openSavedPage,
-				compressHTML: options.compressHTML,
-				backgroundSave: options.backgroundSave,
-				bookmarkId: options.bookmarkId,
-				replaceBookmarkURL: options.replaceBookmarkURL,
-				applySystemTheme: options.applySystemTheme,
-				defaultEditorMode: options.defaultEditorMode,
-				includeInfobar: options.includeInfobar,
-				warnUnsavedPage: options.warnUnsavedPage
-			};
-			message.truncated = pageData.content.length > MAX_CONTENT_SIZE;
-			if (message.truncated) {
-				message.finished = (blockIndex + 1) * MAX_CONTENT_SIZE > pageData.content.length;
-				message.content = pageData.content.substring(blockIndex * MAX_CONTENT_SIZE, (blockIndex + 1) * MAX_CONTENT_SIZE);
-			} else {
-				message.content = pageData.content;
-			}
-			await browser.runtime.sendMessage(message);
+				compressContent: true,
+				mimeType: pageData.mimeType
+			});
+		}
+		if (options.backgroundSave) {
+			await browser.runtime.sendMessage({ method: "downloads.end", taskId: options.taskId });
 		}
 	} else {
-		if (options.saveToClipboard) {
-			saveToClipboard(pageData);
+		if ((options.backgroundSave && !options.sharePage) || options.openEditor || options.saveToGDrive || options.saveToGitHub || options.saveWithCompanion || options.saveWithWebDAV || options.saveToDropbox) {
+			const blobURL = URL.createObjectURL(new Blob([pageData.content], { type: pageData.mimeType }));
+			message.blobURL = blobURL;
+			const result = await browser.runtime.sendMessage(message);
+			URL.revokeObjectURL(blobURL);
+			if (result.error) {
+				message.blobURL = null;
+				for (let blockIndex = 0; blockIndex * MAX_CONTENT_SIZE < pageData.content.length; blockIndex++) {
+					message.truncated = pageData.content.length > MAX_CONTENT_SIZE;
+					if (message.truncated) {
+						message.finished = (blockIndex + 1) * MAX_CONTENT_SIZE > pageData.content.length;
+						message.content = pageData.content.substring(blockIndex * MAX_CONTENT_SIZE, (blockIndex + 1) * MAX_CONTENT_SIZE);
+					} else {
+						message.content = pageData.content;
+					}
+					await browser.runtime.sendMessage(message);
+				}
+			}
 		} else {
-			await downloadPageForeground(pageData);
+			if (options.saveToClipboard) {
+				saveToClipboard(pageData);
+			} else {
+				await downloadPageForeground(pageData, options);
+			}
+			if (options.openSavedPage) {
+				open(URL.createObjectURL(new Blob([pageData.content], { type: pageData.mimeType })));
+			}
+			browser.runtime.sendMessage({ method: "ui.processEnd" });
 		}
-		if (options.openSavedPage) {
-			open(URL.createObjectURL(new Blob([pageData.content], { type: "text/html" })));
-		}
-		browser.runtime.sendMessage({ method: "ui.processEnd" });
+		await browser.runtime.sendMessage({ method: "downloads.end", taskId: options.taskId, hash: pageData.hash, woleetKey: options.woleetKey });
 	}
-	await browser.runtime.sendMessage({ method: "downloads.end", taskId: options.taskId, hash: pageData.hash, woleetKey: options.woleetKey });
 }
 
-async function downloadPageForeground(pageData) {
-	if (pageData.filename && pageData.filename.length) {
-		const link = document.createElement("a");
-		link.download = pageData.filename;
-		link.href = URL.createObjectURL(new Blob([pageData.content], { type: "text/html" }));
-		link.dispatchEvent(new MouseEvent("click"));
-		setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+async function downloadPageForeground(pageData, options) {
+	if (Array.isArray(pageData.content)) {
+		pageData.content = new Uint8Array(pageData.content);
 	}
-	return new Promise(resolve => setTimeout(resolve, 1));
+	if (options.sharePage && navigator.share) {
+		await sharePage(pageData, options);
+	} else {
+		if (pageData.filename && pageData.filename.length) {
+			const link = document.createElement("a");
+			link.download = pageData.filename;
+			link.href = URL.createObjectURL(new Blob([pageData.content], { type: pageData.mimeType }));
+			link.dispatchEvent(new MouseEvent("click"));
+			return new Promise(resolve => setTimeout(() => { URL.revokeObjectURL(link.href); resolve(); }, 1000));
+		}
+	}
 }
 
-function saveToClipboard(page) {
+async function sharePage(pageData, options) {
+	sharePageBar = getSharePageBar();
+	const cancelled = await sharePageBar.display(options.selected);
+	if (!cancelled) {
+		const data = { files: [new File([pageData.content], pageData.filename, { type: pageData.mimeType })] };
+		try {
+			await navigator.share(data);
+			sharePageBar.hide();
+		} catch (error) {
+			sharePageBar.hide();
+			if (error.name === "AbortError") {
+				await sharePage(pageData, options);
+			} else {
+				throw error;
+			}
+		}
+	}
+}
+
+function saveToClipboard(pageData) {
 	const command = "copy";
 	document.addEventListener(command, listener);
 	document.execCommand(command);
 	document.removeEventListener(command, listener);
 
 	function listener(event) {
-		event.clipboardData.setData("text/html", page.content);
-		event.clipboardData.setData("text/plain", page.content);
+		event.clipboardData.setData(pageData.mimeType, pageData.content);
+		event.clipboardData.setData("text/plain", pageData.content);
 		event.preventDefault();
 	}
 }

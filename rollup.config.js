@@ -1,5 +1,7 @@
-import { terser } from "rollup-plugin-terser";
-import resolve from "@rollup/plugin-node-resolve";
+/* global require */
+
+const resolve = require("@rollup/plugin-node-resolve");
+const { terser } = require("rollup-plugin-terser");
 
 const PLUGINS = [resolve({ moduleDirectories: ["node_modules"] })];
 const EXTERNAL = ["single-file-core"];
@@ -53,13 +55,34 @@ export default [{
 	plugins: PLUGINS,
 	external: EXTERNAL
 }, {
-	input: ["src/core/content/content-infobar.js"],
+	input: ["single-file-core/vendor/zip/z-worker.js"],
 	output: [{
-		file: "lib/single-file-extension-infobar.js",
-		format: "umd",
-		name: "infobar",
+		file: "lib/single-file-z-worker.js",
+		format: "es",
 		plugins: [terser()]
-	}]
+	}],
+	plugins: PLUGINS,
+	external: EXTERNAL
+}, {
+	input: ["single-file-core/vendor/zip/zip.js"],
+	output: [{
+		file: "lib/single-file-zip.js",
+		format: "es",
+		plugins: [terser()]
+	}],
+	context: "this",
+	plugins: PLUGINS,
+	external: EXTERNAL
+}, {
+	input: ["single-file-core/vendor/zip/zip.min.js"],
+	output: [{
+		file: "lib/single-file-zip.min.js",
+		format: "es",
+		plugins: [terser()]
+	}],
+	context: "this",
+	plugins: PLUGINS,
+	external: EXTERNAL
 }, {
 	input: ["src/core/content/content-bootstrap.js"],
 	output: [{
@@ -95,16 +118,20 @@ export default [{
 		file: "lib/single-file-extension-editor-init.js",
 		format: "iife",
 		plugins: [terser()]
-	}]
+	}],
+	plugins: PLUGINS,
+	external: EXTERNAL
 }, {
 	input: ["src/ui/content/content-ui-editor-web.js"],
 	output: [{
 		file: "lib/single-file-extension-editor.js",
 		format: "iife",
 		plugins: []
-	}]
+	}],
+	plugins: PLUGINS,
+	external: EXTERNAL
 }, {
-	input: ["src/ui/content/content-ui-editor-helper-web"],
+	input: ["single-file-core/single-file-editor-helper.js"],
 	output: [{
 		file: "lib/single-file-extension-editor-helper.js",
 		format: "umd",
@@ -131,6 +158,13 @@ export default [{
 	input: ["src/lib/single-file/background.js"],
 	output: [{
 		file: "lib/single-file-background.js",
+		format: "iife",
+		plugins: [terser()]
+	}]
+}, {
+	input: ["src/lib/web-stream/index.js"],
+	output: [{
+		file: "lib/web-stream.js",
 		format: "iife",
 		plugins: [terser()]
 	}]

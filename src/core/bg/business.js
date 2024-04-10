@@ -34,18 +34,18 @@ const ERROR_CONNECTION_ERROR_CHROMIUM = "Could not establish connection. Receivi
 const ERROR_CONNECTION_LOST_CHROMIUM = "The message port closed before a response was received.";
 const ERROR_CONNECTION_LOST_GECKO = "Message manager disconnected";
 const ERROR_EDITOR_PAGE_CHROMIUM = "Cannot access contents of url ";
+const ERROR_CHANNEL_CLOSED_CHROMIUM = "A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received";
 const INJECT_SCRIPTS_STEP = 1;
 const EXECUTE_SCRIPTS_STEP = 2;
 const TASK_PENDING_STATE = "pending";
 const TASK_PROCESSING_STATE = "processing";
 
 const extensionScriptFiles = [
-	"lib/single-file-extension-infobar.js",
 	"lib/single-file-extension.js"
 ];
 
 const tasks = [];
-let currentTaskId = 0, maxParallelWorkers;
+let currentTaskId = 0, maxParallelWorkers, processInForeground;
 ui.init({ isSavingTab, saveTabs, saveUrls, cancelTab, openEditor, saveSelectedLinks, batchSaveUrls });
 
 export {
@@ -95,7 +95,7 @@ async function saveUrls(urls, options = {}) {
 		tabOptions.autoClose = true;
 		tabOptions.extensionScriptFiles = extensionScriptFiles;
 		if (tabOptions.passReferrerOnError) {
-			await requests.enableReferrerOnError();
+			requests.enableReferrerOnError();
 		}
 		addTask({
 			tab: { url },
@@ -117,7 +117,7 @@ async function saveTabs(tabs, options = {}) {
 		tabOptions.tabIndex = tab.index;
 		tabOptions.extensionScriptFiles = extensionScriptFiles;
 		if (tabOptions.passReferrerOnError) {
-			await requests.enableReferrerOnError();
+			requests.enableReferrerOnError();
 		}
 		const tabData = {
 			id: tab.id,
@@ -161,9 +161,14 @@ function addTask(info) {
 		tab: info.tab,
 		options: info.options,
 		method: info.method,
-		done: function () {
-			tasks.splice(tasks.findIndex(taskInfo => taskInfo.id == this.id), 1);
-			runTasks();
+		done: function (runNextTasks = true) {
+			const index = tasks.findIndex(taskInfo => taskInfo.id == this.id);
+			if (index > -1) {
+				tasks.splice(index, 1);
+				if (runNextTasks) {
+					runTasks();
+				}
+			}
 		}
 	};
 	tasks.push(taskInfo);
@@ -177,7 +182,9 @@ function openEditor(tab) {
 
 async function initMaxParallelWorkers() {
 	if (!maxParallelWorkers) {
-		maxParallelWorkers = (await config.get()).maxParallelWorkers;
+		const configData = await config.get();
+		processInForeground = configData.processInForeground;
+		maxParallelWorkers = processInForeground ? 1 : configData.maxParallelWorkers;
 	}
 }
 
@@ -214,6 +221,9 @@ async function runTask(taskInfo) {
 	}
 	taskInfo.options.taskId = taskId;
 	try {
+		if (processInForeground) {
+			await browser.tabs.update(taskInfo.tab.id, { active: true });
+		}
 		await browser.tabs.sendMessage(taskInfo.tab.id, { method: taskInfo.method, options: taskInfo.options });
 	} catch (error) {
 		if (error && (!error.message || !isIgnoredError(error))) {
@@ -228,6 +238,7 @@ function isIgnoredError(error) {
 	return error.message == ERROR_CONNECTION_LOST_CHROMIUM ||
 		error.message == ERROR_CONNECTION_ERROR_CHROMIUM ||
 		error.message == ERROR_CONNECTION_LOST_GECKO ||
+		error.message == ERROR_CHANNEL_CLOSED_CHROMIUM ||
 		error.message.startsWith(ERROR_EDITOR_PAGE_CHROMIUM + JSON.stringify(editor.EDITOR_URL));
 }
 
@@ -236,7 +247,7 @@ function isSavingTab(tab) {
 }
 
 function onInit(tab) {
-	cancelTab(tab.id);
+	cancelTab(tab.id, false);
 }
 
 function onTabReplaced(addedTabId, removedTabId) {
@@ -285,8 +296,12 @@ function setCancelCallback(taskId, cancelCallback) {
 	}
 }
 
-function cancelTab(tabId) {
-	Array.from(tasks).filter(taskInfo => taskInfo.tab.id == tabId && !taskInfo.options.autoSave).forEach(cancel);
+function cancelTab(tabId, stopProcessing = true) {
+	Array.from(tasks).filter(taskInfo =>
+		taskInfo.tab.id == tabId &&
+		!taskInfo.options.autoSave &&
+		(stopProcessing || taskInfo.status != TASK_PROCESSING_STATE)
+	).forEach(cancel);
 }
 
 function cancelTask(taskId) {
@@ -294,7 +309,7 @@ function cancelTask(taskId) {
 }
 
 function cancelAllTasks() {
-	Array.from(tasks).forEach(cancel);
+	Array.from(tasks).forEach(taskInfo => cancel(taskInfo, false));
 }
 
 function getTasksInfo() {
@@ -305,24 +320,28 @@ function getTaskInfo(taskId) {
 	return tasks.find(taskInfo => taskInfo.id == taskId);
 }
 
-function cancel(taskInfo) {
+function cancel(taskInfo, runNextTasks) {
 	const tabId = taskInfo.tab.id;
 	taskInfo.cancelled = true;
-	browser.tabs.sendMessage(tabId, {
-		method: "content.cancelSave",
-		options: {
-			loadDeferredImages: taskInfo.options.loadDeferredImages,
-			loadDeferredImagesKeepZoomLevel: taskInfo.options.loadDeferredImagesKeepZoomLevel
+	if (tabId) {
+		browser.tabs.sendMessage(tabId, {
+			method: "content.cancelSave",
+			options: {
+				loadDeferredImages: taskInfo.options.loadDeferredImages,
+				loadDeferredImagesKeepZoomLevel: taskInfo.options.loadDeferredImagesKeepZoomLevel
+			}
+		}).catch(() => {
+			// ignored
+		});
+		if (taskInfo.method == "content.autosave") {
+			ui.onEnd(tabId, true);
 		}
-	});
+		ui.onCancelled(taskInfo.tab);
+	}
 	if (taskInfo.cancel) {
 		taskInfo.cancel();
 	}
-	if (taskInfo.method == "content.autosave") {
-		ui.onEnd(tabId, true);
-	}
-	ui.onCancelled(taskInfo.tab);
-	taskInfo.done();
+	taskInfo.done(runNextTasks);
 }
 
 function mapTaskInfo(taskInfo) {

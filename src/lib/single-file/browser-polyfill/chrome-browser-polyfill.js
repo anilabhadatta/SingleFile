@@ -334,6 +334,9 @@ if (typeof globalThis == "undefined") {
 						}
 					})
 				},
+				onInstalled: {
+					addListener: listener => nativeAPI.runtime.onInstalled.addListener(listener)
+				},
 				sendMessage: message => new Promise((resolve, reject) => {
 					nativeAPI.runtime.sendMessage(message, response => {
 						if (nativeAPI.runtime.lastError) {
@@ -362,8 +365,8 @@ if (typeof globalThis == "undefined") {
 							}
 						});
 					}),
-					get: () => new Promise((resolve, reject) => {
-						nativeAPI.storage.local.get(null, value => {
+					get: keys => new Promise((resolve, reject) => {
+						nativeAPI.storage.local.get(keys, value => {
 							if (nativeAPI.runtime.lastError) {
 								reject(nativeAPI.runtime.lastError);
 							} else {
@@ -400,8 +403,8 @@ if (typeof globalThis == "undefined") {
 							}
 						});
 					}),
-					get: () => new Promise((resolve, reject) => {
-						nativeAPI.storage.sync.get(null, value => {
+					get: keys => new Promise((resolve, reject) => {
+						nativeAPI.storage.sync.get(keys, value => {
 							if (nativeAPI.runtime.lastError) {
 								reject(nativeAPI.runtime.lastError);
 							} else {

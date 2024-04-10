@@ -21,13 +21,14 @@
  *   Source.
  */
 
-/* global browser, globalThis, window, document, location, setTimeout, Node */
-
-const singlefile = globalThis.singlefileBootstrap;
+/* global browser, globalThis, document, location, setTimeout, XMLHttpRequest, Node, DOMParser, Blob, URL, Image, OffscreenCanvas */
 
 const MAX_CONTENT_SIZE = 32 * (1024 * 1024);
 
-let unloadListenerAdded, optionsAutoSave, tabId, tabIndex, autoSaveEnabled, autoSaveTimeout, autoSavingPage, pageAutoSaved, previousLocationHref;
+const singlefile = globalThis.singlefileBootstrap;
+const pendingResponses = new Map();
+
+let unloadListenerAdded, optionsAutoSave, tabId, tabIndex, autoSaveEnabled, autoSaveTimeout, autoSavingPage, pageAutoSaved, previousLocationHref, savedPageDetected, compressContent, extractDataFromPageTags, insertTextBody, insertMetaCSP;
 singlefile.pageInfo = {
 	updatedResources: {},
 	visitDate: new Date()
@@ -45,7 +46,11 @@ browser.runtime.sendMessage({ method: "bootstrap.init" }).then(message => {
 			openEditor(document);
 		}
 	} else {
-		refresh();
+		if (document.readyState == "loading") {
+			document.addEventListener("DOMContentLoaded", refresh);
+		} else {
+			refresh();
+		}
 	}
 });
 browser.runtime.onMessage.addListener(message => {
@@ -53,11 +58,67 @@ browser.runtime.onMessage.addListener(message => {
 		message.method == "content.maybeInit" ||
 		message.method == "content.init" ||
 		message.method == "content.openEditor" ||
-		message.method == "devtools.resourceCommitted") {
+		message.method == "devtools.resourceCommitted" ||
+		message.method == "singlefile.fetchResponse") {
 		return onMessage(message);
 	}
 });
 document.addEventListener("DOMContentLoaded", init, false);
+if (globalThis.window == globalThis.top && location && location.href && (location.href.startsWith("file://") || location.href.startsWith("content://"))) {
+	if (document.readyState == "loading") {
+		document.addEventListener("DOMContentLoaded", extractFile, false);
+	} else {
+		extractFile();
+	}
+}
+
+async function extractFile() {
+	if (document.documentElement.dataset.sfz !== undefined) {
+		const data = await getContent();
+		document.querySelectorAll("#sfz-error-message").forEach(element => element.remove());
+		executeBootstrap(data);
+	} else {
+		if ((document.body && document.body.childNodes.length == 1 && document.body.childNodes[0].tagName == "PRE" && /<html[^>]* data-sfz[^>]*>/i.test(document.body.childNodes[0].textContent))) {
+			const doc = (new DOMParser()).parseFromString(document.body.childNodes[0].textContent, "text/html");
+			document.replaceChild(doc.documentElement, document.documentElement);
+			document.querySelectorAll("script").forEach(element => {
+				const scriptElement = document.createElement("script");
+				scriptElement.textContent = element.textContent;
+				element.parentElement.replaceChild(scriptElement, element);
+			});
+			await extractFile();
+		}
+	}
+}
+
+function getContent() {
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+		xhr.open("GET", location.href);
+		xhr.send();
+		xhr.responseType = "arraybuffer";
+		xhr.onload = () => resolve(new Uint8Array(xhr.response));
+		xhr.onerror = () => {
+			const errorMessageElement = document.getElementById("sfz-error-message");
+			if (errorMessageElement) {
+				errorMessageElement.remove();
+			}
+			const requestId = pendingResponses.size;
+			pendingResponses.set(requestId, { resolve, reject });
+			browser.runtime.sendMessage({ method: "singlefile.fetch", requestId, url: location.href });
+		};
+	});
+}
+
+function executeBootstrap(data) {
+	const scriptElement = document.createElement("script");
+	scriptElement.textContent = "(()=>{" +
+		"document.currentScript.remove();" +
+		"if (document.readyState=='complete') {run()} else {globalThis.addEventListener('load', run)}" +
+		"function run() {this.bootstrap([" + (new Uint8Array(data)).toString() + "])}" +
+		"})()";
+	document.body.appendChild(scriptElement);
+}
 
 async function onMessage(message) {
 	if (autoSaveEnabled && message.method == "content.autosave") {
@@ -86,9 +147,43 @@ async function onMessage(message) {
 		singlefile.pageInfo.updatedResources[message.url] = { content: message.content, type: message.type, encoding: message.encoding };
 		return {};
 	}
+	if (message.method == "singlefile.fetchResponse") {
+		return await onFetchResponse(message);
+	}
+}
+
+async function onFetchResponse(message) {
+	const pendingResponse = pendingResponses.get(message.requestId);
+	if (pendingResponse) {
+		if (message.error) {
+			pendingResponse.reject(new Error(message.error));
+			pendingResponses.delete(message.requestId);
+		} else {
+			if (message.truncated) {
+				if (pendingResponse.array) {
+					pendingResponse.array = pendingResponse.array.concat(message.array);
+				} else {
+					pendingResponse.array = message.array;
+					pendingResponses.set(message.requestId, pendingResponse);
+				}
+				if (message.finished) {
+					message.array = pendingResponse.array;
+				}
+			}
+			if (!message.truncated || message.finished) {
+				pendingResponse.resolve(message.array);
+				pendingResponses.delete(message.requestId);
+			}
+		}
+		return {};
+	}
 }
 
 function init() {
+	const legacyInfobarElement = document.querySelector("singlefile-infobar");
+	if (legacyInfobarElement) {
+		legacyInfobarElement.remove();
+	}
 	if (previousLocationHref != location.href && !singlefile.pageInfo.processing) {
 		pageAutoSaved = false;
 		previousLocationHref = location.href;
@@ -122,7 +217,7 @@ async function autoSavePage() {
 			await new Promise(resolve => autoSaveTimeout = setTimeout(resolve, optionsAutoSave.autoSaveDelay * 1000));
 			await autoSavePage();
 		} else {
-			const waitForUserScript = window._singleFile_waitForUserScript;
+			const waitForUserScript = globalThis[helper.WAIT_FOR_USERSCRIPT_PROPERTY_NAME];
 			let frames = [];
 			let framesSessionId;
 			autoSaveTimeout = null;
@@ -176,7 +271,7 @@ function onUnload() {
 
 function autoSaveUnloadedPage({ autoSaveUnload, autoSaveDiscard, autoSaveRemove }) {
 	const helper = singlefile.helper;
-	const waitForUserScript = window._singleFile_waitForUserScript;
+	const waitForUserScript = globalThis[helper.WAIT_FOR_USERSCRIPT_PROPERTY_NAME];
 	let frames = [];
 	if (!optionsAutoSave.removeFrames && globalThis.frames && globalThis.frames.length) {
 		frames = singlefile.processors.frameTree.getSync(optionsAutoSave);
@@ -208,6 +303,7 @@ function savePage(docData, frames, { autoSaveUnload, autoSaveDiscard, autoSaveRe
 		shadowRoots: docData.shadowRoots,
 		videos: docData.videos,
 		referrer: docData.referrer,
+		adoptedStyleSheets: docData.adoptedStyleSheets,
 		frames: frames,
 		url: location.href,
 		updatedResources,
@@ -219,44 +315,82 @@ function savePage(docData, frames, { autoSaveUnload, autoSaveDiscard, autoSaveRe
 }
 
 async function openEditor(document) {
-	const infobarElement = document.querySelector("singlefile-infobar");
-	if (infobarElement) {
-		infobarElement.remove();
+	let content;
+	if (compressContent) {
+		content = await getContent();
+	} else {
+		serializeShadowRoots(document);
+		content = singlefile.helper.serialize(document);
 	}
-	serializeShadowRoots(document);
-	const content = singlefile.helper.serialize(document);
 	for (let blockIndex = 0; blockIndex * MAX_CONTENT_SIZE < content.length; blockIndex++) {
 		const message = {
 			method: "editor.open",
-			filename: decodeURIComponent(location.href.match(/^.*\/(.*)$/)[1])
+			filename: decodeURIComponent(location.href.match(/^.*\/(.*)$/)[1]),
+			compressContent,
+			extractDataFromPageTags,
+			insertTextBody,
+			insertMetaCSP,
+			selfExtractingArchive: compressContent
 		};
 		message.truncated = content.length > MAX_CONTENT_SIZE;
 		if (message.truncated) {
 			message.finished = (blockIndex + 1) * MAX_CONTENT_SIZE > content.length;
-			message.content = content.substring(blockIndex * MAX_CONTENT_SIZE, (blockIndex + 1) * MAX_CONTENT_SIZE);
+			if (content instanceof Uint8Array) {
+				message.content = Array.from(content.subarray(blockIndex * MAX_CONTENT_SIZE, (blockIndex + 1) * MAX_CONTENT_SIZE));
+			} else {
+				message.content = content.substring(blockIndex * MAX_CONTENT_SIZE, (blockIndex + 1) * MAX_CONTENT_SIZE);
+			}
 		} else {
-			message.content = content;
+			message.embeddedImage = await extractEmbeddedImage(content);
+			message.content = content instanceof Uint8Array ? Array.from(content) : content;
 		}
 		await browser.runtime.sendMessage(message);
 	}
 }
 
+async function extractEmbeddedImage(content) {
+	if (content[0] == 0x89 && content[1] == 0x50 && content[2] == 0x4E && content[3] == 0x47) {
+		let blob = new Blob([new Uint8Array(content)], { type: "image/png" });
+		const blobURI = URL.createObjectURL(blob);
+		const image = new Image();
+		image.src = blobURI;
+		await new Promise((resolve, reject) => {
+			image.onload = resolve;
+			image.onerror = reject;
+		});
+		const canvas = new OffscreenCanvas(image.width, image.height);
+		const context = canvas.getContext("2d");
+		context.drawImage(image, 0, 0);
+		blob = await canvas.convertToBlob({ type: "image/png" });
+		const arrayBuffer = await blob.arrayBuffer();
+		return Array.from(new Uint8Array(arrayBuffer));
+	}
+}
+
 function detectSavedPage(document) {
-	const helper = singlefile.helper;
-	const firstDocumentChild = document.documentElement.firstChild;
-	return firstDocumentChild.nodeType == Node.COMMENT_NODE &&
-		(firstDocumentChild.textContent.includes(helper.COMMENT_HEADER) || firstDocumentChild.textContent.includes(helper.COMMENT_HEADER_LEGACY));
+	if (savedPageDetected === undefined) {
+		const helper = singlefile.helper;
+		const firstDocumentChild = document.documentElement.firstChild;
+		compressContent = document.documentElement.dataset.sfz == "";
+		extractDataFromPageTags = Boolean(document.querySelector("sfz-extra-data"));
+		insertTextBody = Boolean(document.querySelector("body > main[hidden]"));
+		insertMetaCSP = Boolean(document.querySelector("meta[http-equiv=content-security-policy]"));
+		savedPageDetected = compressContent || (
+			firstDocumentChild.nodeType == Node.COMMENT_NODE &&
+			(firstDocumentChild.textContent.includes(helper.COMMENT_HEADER) || firstDocumentChild.textContent.includes(helper.COMMENT_HEADER_LEGACY)));
+	}
+	return savedPageDetected;
 }
 
 function serializeShadowRoots(node) {
-	const SHADOWROOT_ATTRIBUTE_NAME = "shadowroot";
+	const SHADOWROOT_ATTRIBUTE_NAME = "shadowrootmode";
 	node.querySelectorAll("*").forEach(element => {
 		const shadowRoot = singlefile.helper.getShadowRoot(element);
 		if (shadowRoot) {
 			serializeShadowRoots(shadowRoot);
 			const templateElement = document.createElement("template");
 			templateElement.setAttribute(SHADOWROOT_ATTRIBUTE_NAME, "open");
-			templateElement.appendChild(shadowRoot);
+			Array.from(shadowRoot.childNodes).forEach(childNode => templateElement.appendChild(childNode));
 			element.appendChild(templateElement);
 		}
 	});

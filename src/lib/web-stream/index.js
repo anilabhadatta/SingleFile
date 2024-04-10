@@ -21,19 +21,11 @@
  *   Source.
  */
 
-/* global globalThis, fetch */
+/* global globalThis */
 
-const SCRIPT_PATH = "/lib/single-file-infobar.js";
-
-const browser = globalThis.browser;
-
-export {
-	getScript
-};
-
-async function getScript() {
-	if (browser && browser.runtime && browser.runtime.getURL) {
-		const infobarContent = await (await fetch(browser.runtime.getURL(SCRIPT_PATH))).text();
-		return "<script>document.currentScript.remove();" + infobarContent + "</script>";
-	}
+if (typeof globalThis.TransformStream === "undefined") {
+	globalThis.TransformStream = class TransformStream { };
+}
+if (typeof globalThis.WritableStream === "undefined") {
+	globalThis.WritableStream = class WritableStream { };
 }
